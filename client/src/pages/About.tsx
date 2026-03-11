@@ -25,8 +25,8 @@ const CEO_PORTRAIT = "https://d2xsxph8kpxj0f.cloudfront.net/310519663397693691/k
 const skills = [
   { category: "Languages", items: ["JavaScript/TypeScript", "Python", "Java", "SQL", "HTML/CSS"] },
   { category: "Frameworks", items: ["React", "Node.js", "Next.js", "FastAPI", "Express"] },
-  { category: "AI & ML", items: ["OpenAI API", "LangChain", "TensorFlow", "NLP", "Automation"] },
-  { category: "Cloud & DevOps", items: ["AWS", "Docker", "CI/CD", "PostgreSQL", "MongoDB"] },
+  { category: "AI & Automation", items: ["OpenAI API", "LangChain", "Chatbots", "Workflow Automation"] },
+  { category: "Data & Platforms", items: ["PostgreSQL", "MongoDB", "API Design", "Web Platforms"] },
 ];
 
 const timeline = [
@@ -300,6 +300,19 @@ export default function About() {
         </div>
       </section>
 
+      {/* ===== OTHER VENTURES ===== */}
+      <section className="py-12 lg:py-16 relative">
+        <div className="container">
+          <AnimatedSection>
+            <div className="rounded-2xl glass-card p-6 text-center max-w-2xl mx-auto border border-white/5">
+              <p className="text-sm text-white/40">
+                We also operate <a href="#travelvision" target="_blank" rel="noopener noreferrer" className="text-sv-blue hover:text-sv-blue-light transition-colors underline underline-offset-2">TravelVision</a>, our travel-focused division — a separate site with its own focus on AI-powered travel booking and marketing.
+              </p>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* ===== CTA ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-transparent" />
@@ -310,7 +323,7 @@ export default function About() {
                 Let's Work Together
               </h2>
               <p className="mt-5 text-white/40 text-lg">
-                Whether you need a technology partner, a custom software solution,
+                Whether you need a technology partner, a custom development solution,
                 or AI-powered automation, I'd love to hear about your project.
               </p>
               <div className="mt-10">

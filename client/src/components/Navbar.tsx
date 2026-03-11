@@ -10,20 +10,18 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ExternalLink } from "lucide-react";
 
-/* These will be updated once the standalone sites are published */
-const SALESVISION_URL = "#salesvision";
-const TRAVELVISION_URL = "#travelvision";
+const PORTFOLIO_URL = "https://portfolio.salesvision-consulting.com";
 
 const internalLinks = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
-  { href: "/about", label: "About" },
+  { href: "/workflows", label: "Workflows" },
+  { href: "/integrations", label: "Integrations" },
   { href: "/contact", label: "Contact" },
 ];
 
 const externalLinks = [
-  { href: SALESVISION_URL, label: "SalesVision", color: "text-tv-orange" },
-  { href: TRAVELVISION_URL, label: "TravelVision", color: "text-sv-blue" },
+  { href: PORTFOLIO_URL, label: "About", color: "text-sv-blue" },
 ];
 
 export default function Navbar() {
@@ -90,19 +88,23 @@ export default function Navbar() {
                   </span>
                 </Link>
               ))}
-              <div className="w-px h-5 bg-white/10 mx-2" />
-              {externalLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white/50 hover:${link.color} transition-colors duration-200 rounded-lg`}
-                >
-                  {link.label}
-                  <ExternalLink size={12} className="opacity-50" />
-                </a>
-              ))}
+              {externalLinks.length > 0 && (
+                <>
+                  <div className="w-px h-5 bg-white/10 mx-2" />
+                  {externalLinks.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white/50 hover:${link.color} transition-colors duration-200 rounded-lg`}
+                    >
+                      {link.label}
+                      <ExternalLink size={12} className="opacity-50" />
+                    </a>
+                  ))}
+                </>
+              )}
             </nav>
 
             {/* CTA + Mobile Toggle */}
@@ -155,25 +157,29 @@ export default function Navbar() {
                   </Link>
                 </motion.div>
               ))}
-              <div className="w-16 h-px bg-white/10 my-2" />
-              {externalLinks.map((link, i) => (
-                <motion.div
-                  key={link.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (internalLinks.length + i) * 0.05 }}
-                >
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-6 py-3 text-lg font-medium text-white/60 hover:text-white rounded-xl transition-colors"
-                  >
-                    {link.label}
-                    <ExternalLink size={14} className="opacity-50" />
-                  </a>
-                </motion.div>
-              ))}
+              {externalLinks.length > 0 && (
+                <>
+                  <div className="w-16 h-px bg-white/10 my-2" />
+                  {externalLinks.map((link, i) => (
+                    <motion.div
+                      key={link.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (internalLinks.length + i) * 0.05 }}
+                    >
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-6 py-3 text-lg font-medium text-white/60 hover:text-white rounded-xl transition-colors"
+                      >
+                        {link.label}
+                        <ExternalLink size={14} className="opacity-50" />
+                      </a>
+                    </motion.div>
+                  ))}
+                </>
+              )}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

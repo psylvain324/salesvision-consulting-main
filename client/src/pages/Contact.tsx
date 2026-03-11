@@ -12,7 +12,6 @@ import {
   MapPin,
   Send,
   Clock,
-  ArrowRight,
 } from "lucide-react";
 
 const contactInfo = [
@@ -49,7 +48,7 @@ const inquiryTypes = [
   "Technology Consulting",
   "AI Automation",
   "Web Design & Development",
-  "Custom Software",
+  "Custom Development",
   "Partnership Opportunity",
 ];
 
@@ -121,7 +120,7 @@ export default function Contact() {
       {/* ===== CONTACT FORM + INFO ===== */}
       <section className="pb-24 lg:pb-32">
         <div className="container">
-          <div className="grid lg:grid-cols-5 gap-10 lg:gap-16">
+          <div className="grid lg:grid-cols-5 gap-10 lg:gap-16 lg:items-center">
             {/* Form */}
             <div className="lg:col-span-3">
               <AnimatedSection>
@@ -234,30 +233,6 @@ export default function Contact() {
                       </div>
                     </a>
                   ))}
-                </div>
-
-                {/* Quick Links */}
-                <div className="mt-8 rounded-2xl glass-card p-6">
-                  <h3 className="font-[Sora] text-sm font-semibold text-white/60 mb-4 uppercase tracking-wider">
-                    Quick Links
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: "SalesVision Services", href: "/salesvision" },
-                      { label: "TravelVision Services", href: "/travelvision" },
-                      { label: "All Services", href: "/services" },
-                      { label: "About Phillip Sylvain", href: "/about" },
-                    ].map((link) => (
-                      <a
-                        key={link.label}
-                        href={link.href}
-                        className="flex items-center justify-between text-sm text-white/40 hover:text-white transition-colors group"
-                      >
-                        {link.label}
-                        <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
-                    ))}
-                  </div>
                 </div>
               </AnimatedSection>
             </div>

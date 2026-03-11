@@ -11,13 +11,9 @@ import {
   Globe,
   Code,
   BarChart3,
-  Zap,
   Palette,
-  Server,
-  Smartphone,
   Database,
   LineChart,
-  Settings,
   MessageSquare,
 } from "lucide-react";
 
@@ -32,8 +28,6 @@ const serviceCategories = [
     desc: "We help businesses navigate the complex technology landscape with expert consulting services. From system architecture reviews to digital transformation roadmaps, our team provides actionable strategies that align technology investments with business objectives.",
     features: [
       "Digital Transformation Strategy",
-      "System Architecture Review",
-      "Technology Stack Assessment",
       "Process Optimization",
       "Vendor Selection & Management",
       "IT Infrastructure Planning",
@@ -50,8 +44,6 @@ const serviceCategories = [
       "Lead Generation Automation",
       "Chatbot & Virtual Assistants",
       "Predictive Analytics",
-      "Natural Language Processing",
-      "Machine Learning Integration",
     ],
   },
   {
@@ -61,11 +53,9 @@ const serviceCategories = [
     tagline: "Beautiful, functional digital experiences",
     desc: "We create modern, responsive websites and web applications that combine stunning visual design with robust technical architecture. Every project is built with performance, accessibility, and conversion optimization at its core.",
     features: [
-      "Custom Website Design",
-      "Responsive Web Development",
+      "Websites & Landing Pages",
+      "Responsive Design & UX",
       "E-Commerce Solutions",
-      "UI/UX Design",
-      "Landing Page Optimization",
       "CMS Integration",
     ],
   },
@@ -76,40 +66,32 @@ const serviceCategories = [
     tagline: "Data-driven campaigns that deliver results",
     desc: "Our digital marketing services combine creative strategy with data analytics to reach your target audience effectively. We specialize in performance marketing, content strategy, and multi-channel campaigns that drive measurable business growth.",
     features: [
-      "SEO & Content Strategy",
-      "Paid Advertising (PPC/Social)",
+      "SEO, Content Strategy & Conversion Rate Optimization",
       "Email Marketing Automation",
-      "Social Media Management",
-      "Conversion Rate Optimization",
+      "Social Media Automation",
       "Marketing Analytics & Reporting",
     ],
   },
   {
     id: "software",
     icon: Code,
-    title: "Custom Software Applications",
+    title: "Custom Development Applications",
     tagline: "Bespoke solutions for unique challenges",
-    desc: "When off-the-shelf solutions fall short, we build custom software applications tailored to your exact requirements. From mobile apps to enterprise platforms, our development team delivers scalable, secure, and maintainable solutions.",
+    desc: "When off-the-shelf solutions fall short, we build custom development solutions tailored to your exact requirements. From mobile apps to enterprise platforms, our development team delivers scalable, secure, and maintainable solutions.",
     features: [
       "Full-Stack Web Applications",
-      "Mobile App Development",
+      "Custom Reporting & Tools",
       "API Design & Integration",
       "Database Architecture",
-      "Cloud Infrastructure",
-      "DevOps & CI/CD Pipelines",
     ],
   },
 ];
 
 const techStack = [
-  { icon: Server, label: "Cloud Infrastructure" },
   { icon: Database, label: "Data Engineering" },
-  { icon: Smartphone, label: "Mobile Development" },
   { icon: Globe, label: "Web Platforms" },
-  { icon: Brain, label: "Machine Learning" },
-  { icon: Zap, label: "Real-Time Systems" },
-  { icon: Settings, label: "DevOps" },
-  { icon: MessageSquare, label: "NLP & Chatbots" },
+  { icon: MessageSquare, label: "Chatbots" },
+  { icon: Brain, label: "AI & Automation" },
 ];
 
 export default function Services() {
@@ -138,9 +120,9 @@ export default function Services() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
             >
-              End-to-End
+              Areas We Provide
               <br />
-              <span className="gradient-text-purple">Technology Solutions</span>
+              <span className="gradient-text-purple">Assistance In</span>
             </motion.h1>
             <motion.p
               className="mt-6 text-lg text-white/50 leading-relaxed max-w-xl"
@@ -148,9 +130,9 @@ export default function Services() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
             >
-              From strategic consulting to custom software development, we provide
-              comprehensive technology services that help businesses innovate, automate,
-              and grow.
+              We help small and medium-sized businesses innovate, automate, and grow.
+              We also contract into larger projects where our specializations align —
+              from strategic consulting to custom development.
             </motion.p>
           </div>
         </div>
@@ -189,11 +171,11 @@ export default function Services() {
                       <h4 className="font-[Sora] text-sm font-semibold text-white/60 mb-5 uppercase tracking-wider">
                         Capabilities
                       </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-rows-[1fr_1fr] gap-3 min-h-[11rem]">
                         {category.features.map((feature) => (
                           <div
                             key={feature}
-                            className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+                            className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors h-full min-h-0"
                           >
                             <div className="w-1.5 h-1.5 rounded-full bg-sv-blue flex-shrink-0" />
                             <span className="text-sm text-white/60">{feature}</span>
@@ -209,7 +191,7 @@ export default function Services() {
         </div>
       </section>
 
-      {/* ===== TECH STACK ===== */}
+      {/* ===== AREAS WE PROVIDE ASSISTANCE IN ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
         <div className="container relative">
@@ -217,16 +199,19 @@ export default function Services() {
             <div className="text-center mb-16">
               <span className="section-label text-white/30 mb-4 inline-block">Our Expertise</span>
               <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                Technology We Master
+                Areas We Provide Assistance In
               </h2>
+              <p className="mt-4 text-white/40 max-w-xl mx-auto">
+                We specialize in helping small and medium-sized businesses, and we contract into larger projects where our expertise is a fit.
+              </p>
             </div>
           </AnimatedSection>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-6 min-h-[280px]">
             {techStack.map((tech, i) => (
-              <AnimatedSection key={tech.label} delay={i * 0.06}>
-                <div className="group rounded-2xl glass-card glass-card-hover p-6 text-center transition-all duration-300">
-                  <tech.icon className="w-8 h-8 text-sv-blue mx-auto mb-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <AnimatedSection key={tech.label} delay={i * 0.06} className="h-full min-h-0">
+                <div className="group rounded-2xl glass-card glass-card-hover p-8 h-full min-h-0 flex flex-col items-center justify-center text-center transition-all duration-300">
+                  <tech.icon className="w-8 h-8 text-sv-blue mb-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                   <span className="text-sm font-medium text-white/60 group-hover:text-white/80 transition-colors">
                     {tech.label}
                   </span>
@@ -247,13 +232,18 @@ export default function Services() {
                 Let's Build Something Extraordinary
               </h2>
               <p className="mt-5 text-white/40 text-lg">
-                Every great project starts with a conversation. Tell us about your
-                vision and we'll show you how technology can make it a reality.
+                Whether you're a small business or need to scale a larger project —
+                tell us your vision and we'll show you how we can help.
               </p>
-              <div className="mt-10">
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
                 <Link href="/contact">
                   <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
                     Start a Project <ArrowRight size={16} />
+                  </span>
+                </Link>
+                <Link href="/integrations">
+                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white/70 hover:text-white glass-card rounded-xl transition-all duration-200">
+                    See Our Integrations <ArrowRight size={16} />
                   </span>
                 </Link>
               </div>
