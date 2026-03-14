@@ -3,9 +3,16 @@
  * TRAVELVISION PAGE: Warm coral-gold color temperature. AI-powered travel agency.
  * Accent: Sunset coral-to-gold gradient (#f97316 → #eab308)
  */
+import { useState, useCallback, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import {
   ArrowRight,
   Plane,
@@ -19,6 +26,8 @@ import {
   CalendarDays,
   CreditCard,
   Headphones,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const TV_HERO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663397693691/kUiTSqrNT343A8hDu8MEPH/travelvision-hero-JyREbWXK7bPZ5D6FYr8mUH.webp";
@@ -56,6 +65,113 @@ const travelServices = [
   },
 ];
 
+const popularDestinations = [
+  { dest: "Caribbean Cruises", type: "Cruise", price: "From $899" },
+  { dest: "Mediterranean Tours", type: "Tour Package", price: "From $1,499" },
+  { dest: "Hawaiian Getaway", type: "Flight + Hotel", price: "From $1,199" },
+  { dest: "European Explorer", type: "Multi-City", price: "From $2,299" },
+  { dest: "Alaskan Adventure", type: "Cruise + Tour", price: "From $1,799" },
+];
+
+function PopularDestinationsCarousel({
+  destinations,
+}: {
+  destinations: Array<{ dest: string; type: string; price: string }>;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const scrollPrev = useCallback(() => api?.scrollPrev(), [api]);
+  const scrollNext = useCallback(() => api?.scrollNext(), [api]);
+
+  useEffect(() => {
+    if (!api) return;
+    const update = () => {
+      setSelectedIndex(api.selectedScrollSnap());
+      setCanScrollPrev(api.canScrollPrev());
+      setCanScrollNext(api.canScrollNext());
+    };
+    update();
+    api.on("select", update);
+    api.on("reInit", update);
+  }, [api]);
+
+  return (
+    <div className="w-full px-6 sm:px-8">
+      <Carousel
+        setApi={setApi}
+        opts={{
+          align: "start",
+          containScroll: "trimSnaps",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="ml-0 gap-6 sm:gap-8 lg:gap-10">
+          {destinations.map((item, i) => (
+            <CarouselItem
+              key={item.dest}
+              className="pl-0 shrink-0 basis-full sm:basis-[calc(50%-0.75rem)] lg:basis-[calc(33.333%-1.125rem)]"
+            >
+              <motion.div
+                className="flex flex-col h-full p-7 sm:p-8 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors border border-white/5"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <MapPin className="w-5 h-5 text-tv-orange/70 mb-3" />
+                <div className="text-sm font-medium text-white">{item.dest}</div>
+                <div className="text-xs text-white/70 mt-1">{item.type}</div>
+                <span className="text-sm font-semibold text-tv-orange mt-4">
+                  {item.price}
+                </span>
+              </motion.div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-white/5">
+          <button
+            type="button"
+            onClick={scrollPrev}
+            disabled={!canScrollPrev}
+            aria-label="Previous destination"
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            {destinations.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => api?.scrollTo(i)}
+                aria-label={`Go to destination ${i + 1}`}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  i === selectedIndex
+                    ? "bg-tv-orange w-6"
+                    : "bg-white/30 hover:bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={scrollNext}
+            disabled={!canScrollNext}
+            aria-label="Next destination"
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </Carousel>
+    </div>
+  );
+}
+
 const features = [
   {
     icon: Sparkles,
@@ -81,7 +197,7 @@ const features = [
 
 export default function TravelVision() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-brand-darker dark">
       {/* ===== HERO ===== */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
@@ -117,7 +233,7 @@ export default function TravelVision() {
               <span className="gradient-text-orange">Travel Agency</span>
             </motion.h1>
             <motion.p
-              className="mt-6 text-lg text-white/50 leading-relaxed max-w-xl"
+              className="mt-6 text-lg text-white/90 leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
@@ -152,7 +268,16 @@ export default function TravelVision() {
               <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
                 Your Journey Starts Here
               </h2>
-              <p className="mt-4 text-white/40 max-w-2xl mx-auto text-lg">
+              <motion.p
+                className="mt-6 text-2xl sm:text-3xl lg:text-4xl font-medium text-white/80 max-w-3xl mx-auto"
+                initial={{ opacity: 0, x: -60 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              >
+                Discover amazing places with exclusive deals and benefits
+              </motion.p>
+              <p className="mt-4 text-white/85 max-w-2xl mx-auto text-lg">
                 Comprehensive travel services powered by AI, from discovery to booking to post-trip support.
               </p>
             </div>
@@ -168,7 +293,7 @@ export default function TravelVision() {
                   <h3 className="font-[Sora] text-lg font-semibold text-white mb-2">
                     {service.title}
                   </h3>
-                  <p className="text-sm text-white/40 leading-relaxed">
+                  <p className="text-sm text-white/85 leading-relaxed">
                     {service.desc}
                   </p>
                 </div>
@@ -188,7 +313,7 @@ export default function TravelVision() {
                 <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
                   Technology Meets Wanderlust
                 </h2>
-                <p className="mt-5 text-white/40 leading-relaxed text-lg">
+                <p className="mt-5 text-white/85 leading-relaxed text-lg">
                   TravelVision combines the warmth of personalized travel planning with
                   the precision of artificial intelligence. Our platform automates the
                   complex logistics of travel booking while maintaining the human touch
@@ -209,7 +334,7 @@ export default function TravelVision() {
                       </div>
                       <div>
                         <h4 className="font-[Sora] text-sm font-semibold text-white mb-1">{feature.title}</h4>
-                        <p className="text-sm text-white/40">{feature.desc}</p>
+                        <p className="text-sm text-white/85">{feature.desc}</p>
                       </div>
                     </motion.div>
                   ))}
@@ -222,30 +347,7 @@ export default function TravelVision() {
                     <Globe className="w-6 h-6 text-tv-orange" />
                     <h3 className="font-[Sora] text-lg font-semibold text-white">Popular Destinations</h3>
                   </div>
-                  <div className="space-y-4">
-                    {[
-                      { dest: "Caribbean Cruises", type: "Cruise", price: "From $899" },
-                      { dest: "Mediterranean Tours", type: "Tour Package", price: "From $1,499" },
-                      { dest: "Hawaiian Getaway", type: "Flight + Hotel", price: "From $1,199" },
-                      { dest: "European Explorer", type: "Multi-City", price: "From $2,299" },
-                      { dest: "Alaskan Adventure", type: "Cruise + Tour", price: "From $1,799" },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={item.dest}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.08 }}
-                      >
-                        <div>
-                          <div className="text-sm font-medium text-white">{item.dest}</div>
-                          <div className="text-xs text-white/30">{item.type}</div>
-                        </div>
-                        <span className="text-sm font-semibold text-tv-orange">{item.price}</span>
-                      </motion.div>
-                    ))}
-                  </div>
+                  <PopularDestinationsCarousel destinations={popularDestinations} />
                 </div>
               </div>
             </div>
@@ -259,10 +361,10 @@ export default function TravelVision() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                Start Planning Your Next Adventure
+              <h2 className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight">
+                Find Your Next Amazing Adventure
               </h2>
-              <p className="mt-5 text-white/40 text-lg">
+              <p className="mt-5 text-white/85 text-lg">
                 Whether it's a luxury cruise, an exotic tour, or a weekend getaway,
                 TravelVision's AI-powered platform makes booking effortless.
               </p>

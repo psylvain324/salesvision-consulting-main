@@ -71,9 +71,15 @@ const integrationCategories = [
   },
 ];
 
+const stats = [
+  { value: "7+", label: "Integration Categories" },
+  { value: "25+", label: "Tools Supported" },
+  { value: "24/7", label: "Synced Workflows" },
+];
+
 export default function Integrations() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-brand-darker dark">
       {/* ===== HERO ===== */}
       <section className="relative min-h-[60vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
@@ -85,7 +91,7 @@ export default function Integrations() {
         <div className="relative container pt-32 pb-20">
           <div className="max-w-3xl">
             <motion.span
-              className="section-label text-sv-blue mb-6 inline-block"
+              className="section-label text-white/85 mb-6 inline-block"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -103,7 +109,7 @@ export default function Integrations() {
               <span className="gradient-text-blue">Integrate With</span>
             </motion.h1>
             <motion.p
-              className="mt-6 text-lg text-white/50 leading-relaxed max-w-xl"
+              className="mt-6 text-lg text-white/90 leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
@@ -114,16 +120,39 @@ export default function Integrations() {
         </div>
       </section>
 
+      {/* ===== STATS ===== */}
+      <section className="py-16 lg:py-20 border-y border-white/10">
+        <div className="container">
+          <div className="grid grid-cols-3 gap-8 lg:gap-12">
+            {stats.map((stat, i) => (
+              <AnimatedSection key={stat.label} delay={i * 0.08}>
+                <div className="text-center">
+                  <p className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                    {stat.value}
+                  </p>
+                  <p className="mt-1 text-sm text-white/80">{stat.label}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== INTEGRATION CATEGORIES ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <span className="section-label text-white/30 mb-4 inline-block">By Category</span>
+              <div className="section-accent mx-auto mb-4" />
+              <span className="section-label text-white/80 mb-4 inline-block">By Category</span>
               <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Integrations at a Glance
               </h2>
+              <p className="mt-4 text-white/85 max-w-2xl mx-auto text-lg">
+                From CRM and automation to scheduling and marketing — we connect the tools that power your business.
+              </p>
             </div>
           </AnimatedSection>
 
@@ -137,14 +166,14 @@ export default function Integrations() {
                   <h3 className="font-[Sora] text-lg font-semibold text-white mb-2">
                     {category.title}
                   </h3>
-                  <p className="text-sm text-white/40 leading-relaxed mb-5 flex-1">
+                  <p className="text-sm text-white/85 leading-relaxed mb-5 flex-1">
                     {category.desc}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {category.tools.map((tool) => (
                       <span
                         key={tool}
-                        className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/70 border border-white/5"
+                        className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/90 border border-white/5"
                       >
                         {tool}
                       </span>
@@ -166,7 +195,7 @@ export default function Integrations() {
                     <h3 className="font-[Sora] text-xl font-semibold text-white mb-2">
                       Not seeing your tools?
                     </h3>
-                    <p className="text-white/40 text-sm">
+                    <p className="text-white/85 text-sm">
                       We integrate with many more platforms via Zapier, custom APIs, and webhooks. If you use a tool we haven't listed, ask us — we can likely connect it.
                     </p>
                   </div>
@@ -182,6 +211,7 @@ export default function Integrations() {
         </div>
       </section>
 
+      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CTA ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
@@ -191,7 +221,7 @@ export default function Integrations() {
               <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Ready to Connect Your Tools?
               </h2>
-              <p className="mt-5 text-white/40 text-lg">
+              <p className="mt-5 text-white/85 text-lg">
                 Tell us what you're using and we'll show you how our workflows can plug in.
               </p>
               <div className="mt-10">

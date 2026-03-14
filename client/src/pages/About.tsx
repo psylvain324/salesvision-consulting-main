@@ -76,7 +76,7 @@ const values = [
 
 export default function About() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-brand-darker dark">
       {/* ===== HERO ===== */}
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-brand-darker" />
@@ -114,7 +114,7 @@ export default function About() {
                 CEO & Software Developer
               </motion.p>
               <motion.p
-                className="mt-6 text-lg text-white/50 leading-relaxed"
+                className="mt-6 text-lg text-white/85 leading-relaxed"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
@@ -132,21 +132,21 @@ export default function About() {
               >
                 <a
                   href="#"
-                  className="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                  className="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
                   aria-label="GitHub"
                 >
                   <Github size={18} />
                 </a>
                 <a
                   href="#"
-                  className="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                  className="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
                   aria-label="LinkedIn"
                 >
                   <Linkedin size={18} />
                 </a>
                 <a
                   href="#"
-                  className="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                  className="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
                   aria-label="Email"
                 >
                   <Mail size={18} />
@@ -180,7 +180,7 @@ export default function About() {
                     <Code className="w-5 h-5 text-sv-blue" />
                   </div>
                   <div>
-                    <div className="text-xs text-white/40">Founder & CEO</div>
+                    <div className="text-xs text-white/80">Founder & CEO</div>
                     <div className="text-sm font-semibold text-white">SalesVision-Consulting</div>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function About() {
         <div className="container">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <span className="section-label text-white/30 mb-4 inline-block">The Journey</span>
+              <span className="section-label text-white/80 mb-4 inline-block">The Journey</span>
               <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Building the Vision
               </h2>
@@ -219,7 +219,7 @@ export default function About() {
                           <h3 className="font-[Sora] text-lg font-semibold text-white">{item.title}</h3>
                           <span className="text-xs text-sv-blue/60 font-medium">{item.period}</span>
                         </div>
-                        <p className="text-sm text-white/40 leading-relaxed">{item.desc}</p>
+                        <p className="text-sm text-white/85 leading-relaxed">{item.desc}</p>
                       </div>
                     </div>
                   </AnimatedSection>
@@ -254,7 +254,7 @@ export default function About() {
                     {group.items.map((item) => (
                       <div
                         key={item}
-                        className="flex items-center gap-2.5 text-sm text-white/50"
+                        className="flex items-center gap-2.5 text-sm text-white/85"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-sv-blue/40" />
                         {item}
@@ -273,7 +273,7 @@ export default function About() {
         <div className="container">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <span className="section-label text-white/30 mb-4 inline-block">Philosophy</span>
+              <span className="section-label text-white/80 mb-4 inline-block">Philosophy</span>
               <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 What Drives Us
               </h2>
@@ -290,7 +290,7 @@ export default function About() {
                   <h3 className="font-[Sora] text-lg font-semibold text-white mb-3">
                     {value.title}
                   </h3>
-                  <p className="text-sm text-white/40 leading-relaxed">
+                  <p className="text-sm text-white/85 leading-relaxed">
                     {value.desc}
                   </p>
                 </div>
@@ -305,7 +305,7 @@ export default function About() {
         <div className="container">
           <AnimatedSection>
             <div className="rounded-2xl glass-card p-6 text-center max-w-2xl mx-auto border border-white/5">
-              <p className="text-sm text-white/40">
+              <p className="text-sm text-white/85">
                 We also operate <a href="#travelvision" target="_blank" rel="noopener noreferrer" className="text-sv-blue hover:text-sv-blue-light transition-colors underline underline-offset-2">TravelVision</a>, our travel-focused division — a separate site with its own focus on AI-powered travel booking and marketing.
               </p>
             </div>
@@ -322,7 +322,7 @@ export default function About() {
               <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Let's Work Together
               </h2>
-              <p className="mt-5 text-white/40 text-lg">
+              <p className="mt-5 text-white/85 text-lg">
                 Whether you need a technology partner, a custom development solution,
                 or AI-powered automation, I'd love to hear about your project.
               </p>

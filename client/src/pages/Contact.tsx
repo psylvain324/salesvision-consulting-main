@@ -74,7 +74,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-brand-darker dark">
       {/* ===== HERO ===== */}
       <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/3" />
@@ -105,7 +105,7 @@ export default function Contact() {
               <span className="gradient-text-blue">Conversation</span>
             </motion.h1>
             <motion.p
-              className="mt-6 text-lg text-white/50 leading-relaxed"
+              className="mt-6 text-lg text-white/90 leading-relaxed"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
@@ -117,6 +117,7 @@ export default function Contact() {
         </div>
       </section>
 
+      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CONTACT FORM + INFO ===== */}
       <section className="pb-24 lg:pb-32">
         <div className="container">
@@ -125,13 +126,14 @@ export default function Contact() {
             <div className="lg:col-span-3">
               <AnimatedSection>
                 <form onSubmit={handleSubmit} className="rounded-2xl glass-card p-8 lg:p-10">
+                  <div className="section-accent mb-6" />
                   <h2 className="font-[Sora] text-xl font-semibold text-white mb-8">
                     Send Us a Message
                   </h2>
 
                   <div className="grid sm:grid-cols-2 gap-5 mb-5">
                     <div>
-                      <label className="block text-sm text-white/40 mb-2 font-medium">Full Name *</label>
+                      <label className="block text-sm text-white/80 mb-2 font-medium">Full Name *</label>
                       <input
                         type="text"
                         required
@@ -142,7 +144,7 @@ export default function Contact() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/40 mb-2 font-medium">Email Address *</label>
+                      <label className="block text-sm text-white/80 mb-2 font-medium">Email Address *</label>
                       <input
                         type="email"
                         required
@@ -156,7 +158,7 @@ export default function Contact() {
 
                   <div className="grid sm:grid-cols-2 gap-5 mb-5">
                     <div>
-                      <label className="block text-sm text-white/40 mb-2 font-medium">Company</label>
+                      <label className="block text-sm text-white/80 mb-2 font-medium">Company</label>
                       <input
                         type="text"
                         value={formData.company}
@@ -166,7 +168,7 @@ export default function Contact() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/40 mb-2 font-medium">Inquiry Type *</label>
+                      <label className="block text-sm text-white/80 mb-2 font-medium">Inquiry Type *</label>
                       <select
                         required
                         value={formData.inquiryType}
@@ -184,7 +186,7 @@ export default function Contact() {
                   </div>
 
                   <div className="mb-6">
-                    <label className="block text-sm text-white/40 mb-2 font-medium">Message *</label>
+                    <label className="block text-sm text-white/80 mb-2 font-medium">Message *</label>
                     <textarea
                       required
                       rows={5}
@@ -226,7 +228,7 @@ export default function Contact() {
                         <info.icon className="w-5 h-5 text-sv-blue" />
                       </div>
                       <div>
-                        <div className="text-xs text-white/30 font-medium uppercase tracking-wider mb-1">
+                        <div className="text-xs text-white/70 font-medium uppercase tracking-wider mb-1">
                           {info.label}
                         </div>
                         <div className="text-sm text-white/70">{info.value}</div>
