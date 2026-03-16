@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663397693691/kUiTSqrNT343A8hDu8MEPH/hero-main-9pZG7rzQ25Ptgp9RFeC2bY.webp";
-const AI_HOME_PHOTO = "/Images/AI_Home_Photo_1.jpg";
 
 /* These will be updated once the standalone sites are published */
 const SALESVISION_URL = "#salesvision";
@@ -115,34 +114,31 @@ export default function Home() {
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
 
-        <div className="relative container pt-24 pb-16 lg:pt-28 lg:pb-24">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            <div className="max-w-3xl">
+        <div className="relative container pt-24 pb-16 lg:pt-28 lg:pb-24 min-h-[80vh] flex flex-col items-center justify-center text-center">
+          <div className="w-full max-w-3xl mx-auto flex flex-col items-center gap-6 sm:gap-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
-              <span className="section-label text-[0.65rem] text-sv-blue mb-4 inline-block">
+              <span className="section-label text-[0.65rem] text-sv-blue">
                 SalesVision-Consulting
               </span>
             </motion.div>
 
             <motion.h1
-              className="font-[Sora] text-3xl sm:text-4xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight"
+              className="font-[Sora] hero-masked-text leading-[1.08] tracking-tight"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             >
               Powering Business
               <br />
-              Through{" "}
-              <span className="gradient-text-blue">AI</span> &{" "}
-              <span className="gradient-text-orange">Innovation</span>
+              Through AI & Innovation
             </motion.h1>
 
             <motion.p
-              className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl"
+              className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -153,7 +149,7 @@ export default function Home() {
             </motion.p>
 
             <motion.div
-              className="mt-8 flex flex-wrap gap-3"
+              className="flex flex-wrap justify-center gap-4"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -169,20 +165,6 @@ export default function Home() {
                   Schedule a Consultation
                 </span>
               </Link>
-            </motion.div>
-            </div>
-
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <img
-                src={AI_HOME_PHOTO}
-                alt="AI-powered business solutions"
-                className="w-full rounded-2xl shadow-2xl object-cover aspect-[4/3] lg:aspect-auto lg:max-h-[85vh]"
-              />
             </motion.div>
           </div>
         </div>

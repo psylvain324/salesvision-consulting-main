@@ -36,7 +36,31 @@ import {
   FileText,
   Handshake,
   Megaphone,
+  ChevronDown,
+  LayoutGrid,
+  Layers,
+  Settings2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type SectionId = "workflows" | "profile" | "bookings" | "leads" | "integrations" | "payment" | "membership";
 
@@ -416,14 +440,202 @@ function WorkflowConfig({
   );
 }
 
-const CSV_TEMPLATE = "name,email,phone,company,source,notes\nJohn Doe,john@example.com,+1 555-0100,Acme Corp,Website,Interested in quote\nJane Smith,jane@example.com,+1 555-0101,Beta Inc,Referral,Follow up next week";
+type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  source: string;
+  notes: string;
+  group?: string;
+  isReferral?: boolean;
+  referralSource?: string;
+  referralPaymentMade?: boolean;
+  referralPaymentAmount?: number;
+};
+
+const LEAD_FIELDS = [
+  { id: "name", label: "Name" },
+  { id: "email", label: "Email" },
+  { id: "phone", label: "Phone" },
+  { id: "company", label: "Company" },
+  { id: "source", label: "Source" },
+  { id: "notes", label: "Notes" },
+  { id: "group", label: "Group" },
+  { id: "isReferral", label: "Referral" },
+  { id: "referralSource", label: "Referred by" },
+  { id: "referralPaymentMade", label: "Ref. payment made" },
+  { id: "referralPaymentAmount", label: "Ref. amount" },
+] as const;
+
+const GROUP_BY_OPTIONS = [
+  { id: "none", label: "No grouping" },
+  { id: "source", label: "Source" },
+  { id: "group", label: "Group" },
+  { id: "isReferral", label: "Referral" },
+];
+
+const CSV_TEMPLATE = "name,email,phone,company,source,notes,is_referral,referred_by,ref_payment_made,ref_amount\nJohn Doe,john@example.com,+1 555-0100,Acme Corp,Website,Interested in quote,no,,,\nJane Smith,jane@example.com,+1 555-0101,Beta Inc,Referral,Follow up,yes,Jane Doe,yes,100";
 
 const LEAD_QUANTITY_OPTIONS = [50, 100, 250, 500] as const;
 const LEAD_QUALITY_OPTIONS = ["Low", "Medium", "High"] as const;
 const LEAD_VETTED_OPTIONS = ["Vetted", "Non-Vetted"] as const;
 const LEAD_OUTPUT_OPTIONS = ["CSV", "Excel (.xlsx)"] as const;
 
+function getLeadValue(lead: Lead, fieldId: string): string {
+  const v = lead[fieldId as keyof Lead];
+  if (v === undefined || v === null) return "—";
+  if (typeof v === "boolean") return v ? "Yes" : "No";
+  if (typeof v === "number") return v > 0 ? `$${v.toFixed(2)}` : "—";
+  return String(v);
+}
+
+function getGroupKey(lead: Lead, fieldId: string): string {
+  if (fieldId === "none") return "";
+  const v = getLeadValue(lead, fieldId);
+  return v || "(blank)";
+}
+
+function AddLeadDialog({
+  open,
+  onOpenChange,
+  onAdd,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAdd: (lead: Omit<Lead, "id">) => void;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [source, setSource] = useState("");
+  const [notes, setNotes] = useState("");
+  const [group, setGroup] = useState("");
+  const [isReferral, setIsReferral] = useState(false);
+  const [referralSource, setReferralSource] = useState("");
+  const [referralPaymentMade, setReferralPaymentMade] = useState(false);
+  const [referralPaymentAmount, setReferralPaymentAmount] = useState("");
+
+  const reset = () => {
+    setName("");
+    setEmail("");
+    setPhone("");
+    setCompany("");
+    setSource("");
+    setNotes("");
+    setGroup("");
+    setIsReferral(false);
+    setReferralSource("");
+    setReferralPaymentMade(false);
+    setReferralPaymentAmount("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAdd({
+      name,
+      email,
+      phone,
+      company,
+      source,
+      notes,
+      group: group || undefined,
+      isReferral: isReferral || undefined,
+      referralSource: referralSource || undefined,
+      referralPaymentMade: referralPaymentMade || undefined,
+      referralPaymentAmount: referralPaymentAmount ? parseFloat(referralPaymentAmount) || undefined : undefined,
+    });
+    reset();
+    onOpenChange(false);
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) reset();
+    onOpenChange(next);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add Lead</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="add-name">Name</Label>
+              <Input id="add-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-email">Email</Label>
+              <Input id="add-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="add-phone">Phone</Label>
+              <Input id="add-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555-0100" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-company">Company</Label>
+              <Input id="add-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Acme Corp" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="add-source">Source</Label>
+              <Input id="add-source" value={source} onChange={(e) => setSource(e.target.value)} placeholder="Website, Referral..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-group">Group</Label>
+              <Input id="add-group" value={group} onChange={(e) => setGroup(e.target.value)} placeholder="Optional" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="add-notes">Notes</Label>
+            <Input id="add-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes..." />
+          </div>
+          <div className="border-t border-gray-200 pt-4 space-y-4">
+            <p className="text-sm font-medium text-gray-700">Referral</p>
+            <div className="flex items-center gap-2">
+              <Checkbox id="add-referral" checked={isReferral} onCheckedChange={(c) => setIsReferral(!!c)} />
+              <Label htmlFor="add-referral" className="font-normal cursor-pointer">This is a referral</Label>
+            </div>
+            {isReferral && (
+              <div className="grid grid-cols-2 gap-4 pl-6">
+                <div className="space-y-2">
+                  <Label htmlFor="add-referred-by">Referred by</Label>
+                  <Input id="add-referred-by" value={referralSource} onChange={(e) => setReferralSource(e.target.value)} placeholder="Name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="add-ref-amount">Amount ($)</Label>
+                  <Input id="add-ref-amount" type="number" min="0" step="0.01" value={referralPaymentAmount} onChange={(e) => setReferralPaymentAmount(e.target.value)} placeholder="0" />
+                </div>
+                <div className="flex items-center gap-2 col-span-2">
+                  <Checkbox id="add-ref-paid" checked={referralPaymentMade} onCheckedChange={(c) => setReferralPaymentMade(!!c)} />
+                  <Label htmlFor="add-ref-paid" className="font-normal cursor-pointer">Payment made</Label>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
+            <Button type="submit" className="bg-sv-blue hover:bg-sv-blue-light">Add Lead</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LeadsContent({ profileJob, profileRole }: { profileJob: string; profileRole: string }) {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [leadView, setLeadView] = useState<"grid" | "grouped">("grid");
+  const [groupByField, setGroupByField] = useState<string>("none");
+  const [visibleFields, setVisibleFields] = useState<string[]>(LEAD_FIELDS.map((f) => f.id));
   const [isDragging, setIsDragging] = useState(false);
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -433,6 +645,13 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
   const [leadOutputType, setLeadOutputType] = useState<string>("CSV");
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const addLead = (lead: Omit<Lead, "id">) => {
+    setLeads((prev) => [...prev, { ...lead, id: crypto.randomUUID() }]);
+  };
+  const removeLead = (id: string) => {
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+  };
 
   const handleGenerateLeads = () => {
     setIsGenerating(true);
@@ -474,8 +693,48 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
       try {
         const text = (e.target?.result as string) || "";
         const rows = parseCsv(text);
-        const dataRows = rows.length > 1 ? rows.length - 1 : 0;
-        setImportedCount(dataRows);
+        if (rows.length < 2) {
+          setImportedCount(0);
+          return;
+        }
+        const headers = rows[0].map((h) => h.toLowerCase().replace(/\s/g, "_"));
+        const dataRows = rows.slice(1);
+        const newLeads: Lead[] = dataRows
+          .filter((row) => row.some((c) => c))
+          .map((row) => {
+            const get = (cols: string[]) => {
+              const i = cols.findIndex((c) => headers.includes(c));
+              return i >= 0 ? (row[headers.indexOf(cols[i])] || "").trim() : "";
+            };
+            const name = get(["name"]) || get(["Name"]);
+            const email = get(["email"]) || get(["Email"]);
+            const phone = get(["phone"]) || get(["Phone"]);
+            const company = get(["company"]) || get(["Company"]);
+            const source = get(["source"]) || get(["Source"]);
+            const notes = get(["notes"]) || get(["Notes"]);
+            const isRefRaw = get(["is_referral", "isreferral"]);
+            const isReferral = /^(1|yes|true)$/i.test(isRefRaw);
+            const referralSource = get(["referred_by", "referralsource", "referral_source"]);
+            const refPayRaw = get(["ref_payment_made", "refpaymentmade"]);
+            const referralPaymentMade = /^(1|yes|true)$/i.test(refPayRaw);
+            const refAmt = get(["ref_amount", "refamount"]);
+            const referralPaymentAmount = refAmt ? parseFloat(refAmt) || undefined : undefined;
+            return {
+              id: crypto.randomUUID(),
+              name,
+              email,
+              phone,
+              company,
+              source,
+              notes,
+              isReferral: isReferral || undefined,
+              referralSource: referralSource || undefined,
+              referralPaymentMade: referralPaymentMade || undefined,
+              referralPaymentAmount,
+            };
+          });
+        setLeads((prev) => [...prev, ...newLeads]);
+        setImportedCount(newLeads.length);
       } catch {
         setImportError("Could not parse CSV. Please check the file format.");
       }
@@ -646,7 +905,7 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
           )}
           {importedCount !== null && !importError && (
             <p className="text-sm text-green-700 bg-green-50 px-4 py-2 rounded-lg">
-              Found {importedCount} lead{importedCount !== 1 ? "s" : ""} in file. Backend integration coming soon to save leads.
+              Imported {importedCount} lead{importedCount !== 1 ? "s" : ""} from file.
             </p>
           )}
 
@@ -662,15 +921,174 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-gray-500" />
-            Your leads
-          </h3>
-          <p className="text-sm text-gray-500">
-            Imported leads will appear here. Integration with CRM and workflows coming soon.
-          </p>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-gray-500" />
+              Your leads
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" onClick={() => setAddLeadOpen(true)} className="bg-sv-blue hover:bg-sv-blue-light">
+                <Plus className="w-4 h-4" />
+                Add Lead
+              </Button>
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setLeadView("grid")}
+                  className={`px-3 py-1.5 text-sm ${leadView === "grid" ? "bg-sv-blue/10 text-sv-blue font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                >
+                  <LayoutGrid className="w-4 h-4 inline mr-1.5 align-middle" />
+                  Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeadView("grouped")}
+                  className={`px-3 py-1.5 text-sm border-l border-gray-200 ${leadView === "grouped" ? "bg-sv-blue/10 text-sv-blue font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                >
+                  <Layers className="w-4 h-4 inline mr-1.5 align-middle" />
+                  Grouped
+                </button>
+              </div>
+              {leadView === "grouped" && (
+                <Select value={groupByField} onValueChange={setGroupByField}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Group by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GROUP_BY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Settings2 className="w-4 h-4" />
+                    Fields
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-56">
+                  <p className="text-sm font-medium mb-3">Visible columns</p>
+                  <div className="space-y-2">
+                    {LEAD_FIELDS.map((f) => (
+                      <label key={f.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                        <Checkbox
+                          checked={visibleFields.includes(f.id)}
+                          onCheckedChange={(checked) => {
+                            setVisibleFields((prev) =>
+                              checked ? [...prev, f.id] : prev.filter((id) => id !== f.id)
+                            );
+                          }}
+                        />
+                        {f.label}
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {leads.length === 0 ? (
+            <p className="text-sm text-gray-500 py-6">
+              No leads yet. Add leads manually or import from a CSV file above.
+            </p>
+          ) : leadView === "grid" ? (
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {visibleFields.map((fid) => (
+                      <TableHead key={fid}>{LEAD_FIELDS.find((f) => f.id === fid)?.label ?? fid}</TableHead>
+                    ))}
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      {visibleFields.map((fid) => (
+                        <TableCell key={fid}>{getLeadValue(lead, fid)}</TableCell>
+                      ))}
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={() => removeLead(lead.id)}
+                          className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                          aria-label="Remove lead"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(() => {
+                const groups = new Map<string, Lead[]>();
+                for (const lead of leads) {
+                  const key = getGroupKey(lead, groupByField);
+                  if (!groups.has(key)) groups.set(key, []);
+                  groups.get(key)!.push(lead);
+                }
+                const sorted = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+                return sorted.map(([key, items]) => (
+                  <Collapsible key={key || "blank"}>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100">
+                      <span>{key || "(blank)"}</span>
+                      <span className="text-gray-500">
+                        {items.length} lead{items.length !== 1 ? "s" : ""}
+                      </span>
+                      <ChevronDown className="w-4 h-4 transition-transform [[data-state=open]_&]:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="mt-2 rounded-lg border border-gray-200 overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {visibleFields.map((fid) => (
+                                <TableHead key={fid}>{LEAD_FIELDS.find((f) => f.id === fid)?.label ?? fid}</TableHead>
+                              ))}
+                              <TableHead className="w-10" />
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {items.map((lead) => (
+                              <TableRow key={lead.id}>
+                                {visibleFields.map((fid) => (
+                                  <TableCell key={fid}>{getLeadValue(lead, fid)}</TableCell>
+                                ))}
+                                <TableCell>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeLead(lead.id)}
+                                    className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                    aria-label="Remove lead"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ));
+              })()}
+            </div>
+          )}
         </div>
+
+        <AddLeadDialog open={addLeadOpen} onOpenChange={setAddLeadOpen} onAdd={addLead} />
 
         {/* CRM Sync — contextual to leads */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">

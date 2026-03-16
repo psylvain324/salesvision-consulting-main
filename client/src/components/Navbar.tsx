@@ -1,6 +1,6 @@
 /*
  * Navbar: VanRein-inspired light header. White/light background, blue & orange accents.
- * Transforms into floating pill on scroll with shadow.
+ * Fixed at top; subtle shadow/backdrop animation on scroll (no moving or shrinking).
  */
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -43,28 +43,26 @@ export default function Navbar() {
   return (
     <>
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? "top-4 mx-4 sm:mx-8 lg:mx-auto lg:max-w-5xl rounded-lg"
-            : "rounded-b-lg"
-        }`}
+        className="fixed top-0 left-0 right-0 z-50 rounded-b-lg"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
         <div
-          className={`transition-all duration-500 ${
+          className={`transition-all duration-500 rounded-b-lg border-b border-gray-100 ${
             scrolled
-              ? "bg-white/95 backdrop-blur-xl rounded-lg shadow-lg shadow-black/10 ring-0 border-0 border-b border-gray-100"
-              : "bg-white/95 backdrop-blur-md rounded-b-lg shadow-sm shadow-black/5 ring-0 border-0 border-b border-gray-100"
+              ? "bg-white/98 backdrop-blur-xl shadow-md shadow-black/10"
+              : "bg-white/95 backdrop-blur-md shadow-sm shadow-black/5"
           }`}
         >
-          <div className={`flex items-center justify-between h-16 ${scrolled ? "px-6" : "px-4 sm:px-8 lg:px-12"}`}>
+          <div className="flex items-center justify-between h-16 px-4 sm:px-8 lg:px-12">
             {/* Logo */}
-            <Link href="/" className="border-0 outline-none">
-              <span className="font-[Sora] font-bold text-lg tracking-tight text-gray-900 border-0">
-                Sales<span className="gradient-text-blue">Vision</span>
-              </span>
+            <Link href="/" className="border-0 outline-none flex items-center">
+              <img
+                src="/Images/SalesVision_HeaderLogo.png"
+                alt="SalesVision"
+                className="h-8 w-auto"
+              />
             </Link>
 
             {/* Desktop Nav — hidden on Client Portal */}

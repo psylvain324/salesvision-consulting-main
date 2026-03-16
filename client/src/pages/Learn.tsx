@@ -24,6 +24,7 @@ import {
   Clock,
   GraduationCap,
 } from "lucide-react";
+import { learnArticles } from "@/content/learnArticles";
 
 const recentPosts = [
   {
@@ -219,7 +220,7 @@ export default function Learn() {
               </span>
               <h1 className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] tracking-tight">
                 Insights &{" "}
-                <span className="gradient-text-blue">Courses</span>
+                <span className="gradient-text-blue">Articles</span>
               </h1>
               <p className="mt-6 text-lg text-gray-600 leading-relaxed max-w-xl">
                 Stay ahead with our latest articles on AI automation, digital marketing,
@@ -244,11 +245,11 @@ export default function Learn() {
                   Latest articles on automation, marketing, and technology
                 </p>
               </div>
-              <Link href="/contact">
+              <a href="#all-articles">
                 <span className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors">
                   View all posts <ArrowRight size={14} />
                 </span>
-              </Link>
+              </a>
             </div>
           </AnimatedSection>
 
@@ -258,21 +259,21 @@ export default function Learn() {
         </div>
       </section>
 
-      {/* ===== COURSE AREAS ===== */}
+      {/* ===== ARTICLE TOPICS ===== */}
       <section className="py-24 lg:py-32">
         <div className="container">
           <AnimatedSection>
             <div className="text-center mb-16">
               <div className="section-accent mx-auto mb-4" />
               <span className="section-label text-sv-blue/80 mb-4 inline-block">
-                Learning Paths
+                Article Topics
               </span>
               <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight">
-                Explore Our Courses
+                Explore articles
               </h2>
               <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-lg">
-                Structured learning experiences to help you master AI automation,
-                digital marketing, and technology consulting.
+                Articles and guides on AI automation, digital marketing,
+                and technology consulting.
               </p>
             </div>
           </AnimatedSection>
@@ -308,10 +309,46 @@ export default function Learn() {
                   </div>
                   <Link href="/contact">
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors">
-                      Start course <ArrowRight size={14} />
+                      Explore articles <ArrowRight size={14} />
                     </span>
                   </Link>
                 </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== ALL ARTICLES ===== */}
+      <section id="all-articles" className="scroll-mt-24 py-24 lg:py-32 bg-gray-50/50">
+        <div className="container">
+          <AnimatedSection>
+            <div className="mb-12">
+              <div className="section-accent mb-4" />
+              <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                All Articles
+              </h2>
+              <p className="mt-2 text-gray-600">
+                Browse our full library of guides and resources
+              </p>
+            </div>
+          </AnimatedSection>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {learnArticles.map((article, i) => (
+              <AnimatedSection key={article.slug} delay={i * 0.05}>
+                <Link href={`/learn/${article.slug}`}>
+                  <div className="group h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-sv-blue/30 cursor-pointer">
+                    <h3 className="font-[Sora] text-lg font-semibold text-gray-900 mb-2 group-hover:text-sv-blue transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                      {article.description}
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-sv-blue group-hover:gap-3 transition-all">
+                      Read article <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </Link>
               </AnimatedSection>
             ))}
           </div>
@@ -328,7 +365,7 @@ export default function Learn() {
                 Ready to Level Up?
               </h2>
               <p className="mt-4 text-gray-600">
-                Get notified when we publish new posts or launch new courses.
+                Get notified when we publish new posts or articles.
                 Subscribe to our newsletter for the latest updates.
               </p>
               <div className="mt-8">

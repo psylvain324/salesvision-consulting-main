@@ -10,6 +10,7 @@ import Workflows from "./pages/Workflows";
 import Integrations from "./pages/Integrations";
 import Contact from "./pages/Contact";
 import Learn from "./pages/Learn";
+import LearnArticle from "./pages/LearnArticle";
 import ClientPortal from "./pages/ClientPortal";
 import TravelVision from "./pages/TravelVision";
 import Navbar from "./components/Navbar";
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/integrations" component={Integrations} />
       <Route path="/contact" component={Contact} />
       <Route path="/learn" component={Learn} />
+      <Route path="/learn/:slug" component={LearnArticle} />
       <Route path="/client-portal" component={ClientPortal} />
       <Route path="/travelvision" component={TravelVision} />
       <Route path="/404" component={NotFound} />
