@@ -8,19 +8,23 @@
   font-size: clamp(1.875rem, 5vw, 3.75rem); /* ~text-3xl to text-6xl */
   font-weight: bold;
   color: transparent;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url("/Images/Background_Futuristic_3.jpeg");
-  /* Both layers: gradient fixed, image at 200% so position animation pans */
-  background-size: 100% 100%, 200% 200%;
-  background-position: 0 50%, 0 50%;
+  background-image: url("/Images/Background_Futuristic_3.jpeg");
+  background-size: 200% 200%;
+  background-position: 0 50%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: hero-masked-bg 10s ease-in-out infinite alternate;
+  -webkit-animation: hero-masked-bg 10s linear infinite alternate;
+  animation: hero-masked-bg 10s linear infinite alternate;
 }
 
+@-webkit-keyframes hero-masked-bg {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
 @keyframes hero-masked-bg {
-  0% { background-position: 0% 50%, 0% 50%; }
-  100% { background-position: 0% 50%, 100% 50%; }
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
 /* Hero background — subtle Ken Burns drift */
