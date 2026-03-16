@@ -138,7 +138,7 @@ export default function Integrations() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== INTEGRATION CATEGORIES ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
@@ -211,7 +211,7 @@ export default function Integrations() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CTA ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />

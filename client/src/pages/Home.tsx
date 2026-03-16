@@ -23,7 +23,7 @@ import {
   Film,
 } from "lucide-react";
 
-const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663397693691/kUiTSqrNT343A8hDu8MEPH/hero-main-9pZG7rzQ25Ptgp9RFeC2bY.webp";
+const HERO_BG = "/Images/Background_Futuristic_1.jpeg";
 
 /* These will be updated once the standalone sites are published */
 const SALESVISION_URL = "#salesvision";
@@ -80,7 +80,7 @@ export default function Home() {
           <img
             src={HERO_BG}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-40"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-40 hero-bg-drift"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-white/80" />
           <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-transparent to-transparent" />
@@ -121,9 +121,6 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
-              <span className="section-label text-[0.65rem] text-sv-blue">
-                SalesVision-Consulting
-              </span>
             </motion.div>
 
             <motion.h1
@@ -185,7 +182,7 @@ export default function Home() {
       </section>
 
       {/* ===== CORE SERVICES ===== */}
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
         <div className="container relative">
@@ -232,7 +229,7 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== PRE-BUILT WORKFLOWS ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
@@ -272,7 +269,7 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== STATS ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="container">
@@ -301,7 +298,7 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CTA SECTION ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
@@ -336,7 +333,7 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== OUR DIVISIONS ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="container">

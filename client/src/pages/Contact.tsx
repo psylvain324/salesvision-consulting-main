@@ -117,7 +117,7 @@ export default function Contact() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CONTACT FORM + INFO ===== */}
       <section className="pb-24 lg:pb-32">
         <div className="container">

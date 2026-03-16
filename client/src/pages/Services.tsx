@@ -188,14 +188,14 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== SERVICE CATEGORIES ===== */}
       <section className="py-24 lg:py-32">
         <div className="container">
           <div className="space-y-20">
             {serviceCategories.map((category, i) => (
               <AnimatedSection key={category.id} delay={0.1}>
-                {i > 0 && <hr className="section-divider w-full max-w-2xl mx-auto my-12 opacity-60" aria-hidden />}
+                {i > 0 && <hr className="section-divider section-divider-sm w-full max-w-2xl mx-auto" aria-hidden />}
                 <div className={`grid lg:grid-cols-2 gap-10 lg:gap-16 items-start ${i % 2 === 1 ? "lg:direction-rtl" : ""}`}>
                   <div className={i % 2 === 1 ? "lg:order-2" : ""}>
                     <div className="flex items-center gap-3 mb-4">
@@ -243,7 +243,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== AREAS WE PROVIDE ASSISTANCE IN ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
@@ -276,7 +276,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== INDUSTRIES WE SERVE ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="container">
@@ -306,7 +306,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider w-11/12 sm:w-3/4" aria-hidden />
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CTA ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />

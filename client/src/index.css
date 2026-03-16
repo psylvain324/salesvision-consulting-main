@@ -8,18 +8,29 @@
   font-size: clamp(1.875rem, 5vw, 3.75rem); /* ~text-3xl to text-6xl */
   font-weight: bold;
   color: transparent;
-  background-image: url("https://images.unsplash.com/photo-1732535725600-f805d8b33c9c?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-  background-size: 200%;
-  background-position: 0 50%;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url("/Images/Background_Futuristic_3.jpeg");
+  /* Both layers: gradient fixed, image at 200% so position animation pans */
+  background-size: 100% 100%, 200% 200%;
+  background-position: 0 50%, 0 50%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: hero-masked-bg 5s infinite alternate linear;
+  animation: hero-masked-bg 10s ease-in-out infinite alternate;
 }
 
 @keyframes hero-masked-bg {
-  0% { background-position: 0 50%; }
-  100% { background-position: 100% 50%; }
+  0% { background-position: 0% 50%, 0% 50%; }
+  100% { background-position: 0% 50%, 100% 50%; }
+}
+
+/* Hero background — subtle Ken Burns drift */
+.hero-bg-drift {
+  animation: hero-bg-drift 25s ease-in-out infinite alternate;
+}
+
+@keyframes hero-bg-drift {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.06) translate(-1.5%, -1%); }
 }
 
 @theme inline {
@@ -235,12 +246,13 @@
     background-clip: text;
   }
 
-  /* Section divider — light: subtle gradient; dark: neon glow */
+  /* Section divider — blue & purple (logo colors), subtle glow, blends with page */
+  /* Base: all HRs get this styling */
   .section-divider {
     display: block;
     width: 100%;
     max-width: 100%;
-    height: 2px;
+    height: 1px;
     margin: 2.5rem auto;
     padding: 0;
     border: none;
@@ -248,27 +260,100 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      oklch(0.72 0.19 55 / 0.4) 20%,
-      oklch(0.42 0.16 260 / 0.5) 50%,
-      oklch(0.72 0.19 55 / 0.4) 80%,
-      transparent 100%
-    );
-  }
-
-  .dark .section-divider {
-    height: 3px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      oklch(0.72 0.19 55 / 0.3) 15%,
-      oklch(0.72 0.19 55) 50%,
-      oklch(0.72 0.19 55 / 0.3) 85%,
+      oklch(0.42 0.16 260 / 0.25) 25%,
+      oklch(0.52 0.18 290 / 0.4) 50%,
+      oklch(0.42 0.16 260 / 0.25) 75%,
       transparent 100%
     );
     box-shadow:
-      0 0 20px oklch(0.72 0.19 55 / 0.45),
-      0 0 12px oklch(0.72 0.19 55 / 0.35),
-      0 0 4px oklch(0.72 0.19 55 / 0.2);
+      0 0 16px oklch(0.42 0.16 260 / 0.12),
+      0 0 8px oklch(0.52 0.18 290 / 0.08);
+  }
+
+  /* Smaller dividers (between list items) — lighter, less margin */
+  .section-divider-sm {
+    margin: 1.5rem auto;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(0.42 0.16 260 / 0.2) 25%,
+      oklch(0.52 0.18 290 / 0.35) 50%,
+      oklch(0.42 0.16 260 / 0.2) 75%,
+      transparent 100%
+    );
+    box-shadow:
+      0 0 10px oklch(0.42 0.16 260 / 0.08),
+      0 0 4px oklch(0.52 0.18 290 / 0.05);
+  }
+
+  /* Larger dividers — subtle shimmer effect */
+  .section-divider-lg {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .section-divider-lg::after {
+    content: "";
+    position: absolute;
+    inset: -2px -20px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(1 0 0 / 0.06) 45%,
+      oklch(0.52 0.18 290 / 0.15) 50%,
+      oklch(1 0 0 / 0.06) 55%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: section-divider-shimmer 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes section-divider-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .dark .section-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(0.42 0.16 260 / 0.3) 25%,
+      oklch(0.52 0.18 290 / 0.45) 50%,
+      oklch(0.42 0.16 260 / 0.3) 75%,
+      transparent 100%
+    );
+    box-shadow:
+      0 0 20px oklch(0.42 0.16 260 / 0.2),
+      0 0 10px oklch(0.52 0.18 290 / 0.15),
+      0 0 4px oklch(0.42 0.16 260 / 0.1);
+  }
+
+  .dark .section-divider-sm {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(0.42 0.16 260 / 0.25) 25%,
+      oklch(0.52 0.18 290 / 0.4) 50%,
+      oklch(0.42 0.16 260 / 0.25) 75%,
+      transparent 100%
+    );
+    box-shadow:
+      0 0 12px oklch(0.42 0.16 260 / 0.15),
+      0 0 6px oklch(0.52 0.18 290 / 0.1);
+  }
+
+  .dark .section-divider-lg::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(1 0 0 / 0.04) 45%,
+      oklch(0.52 0.18 290 / 0.2) 50%,
+      oklch(1 0 0 / 0.04) 55%,
+      transparent 100%
+    );
   }
 
   /* Section accent — blue/orange gradient */
