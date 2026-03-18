@@ -1,9 +1,3 @@
-/*
- * DESIGN: VanRein-inspired light theme with blue & orange accents
- * HOME PAGE: Umbrella brand. Hero, sister company cards, services overview, stats.
- * Clean layout, light backgrounds, blue + orange accents.
- * Typography: Sora display, Inter body.
- */
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
@@ -21,13 +15,18 @@ import {
   ExternalLink,
   Workflow,
   Film,
+  Megaphone,
+  Plug2,
 } from "lucide-react";
+import ScrollDownButton from "@/components/ScrollDownButton";
 
-const HERO_BG = "/Images/Background_Futuristic_1.jpeg";
+const HERO_BG = "/Images/CyberCityBackground_1.jpg";
 
 /* These will be updated once the standalone sites are published */
 const SALESVISION_URL = "#salesvision";
 const TRAVELVISION_URL = "#travelvision";
+
+const statIconColors = ["text-emerald-600", "text-violet-600", "text-sv-blue", "text-amber-600"];
 
 const stats = [
   { value: "500+", label: "Leads Generated Monthly", icon: TrendingUp },
@@ -36,36 +35,57 @@ const stats = [
   { value: "24/7", label: "Automated Operations", icon: Shield },
 ];
 
+const serviceIconColors: Record<string, { bg: string; text: string }> = {
+  violet: { bg: "bg-violet-500/15", text: "text-violet-600" },
+  orange: { bg: "bg-tv-orange/15", text: "text-tv-orange" },
+  emerald: { bg: "bg-emerald-500/15", text: "text-emerald-600" },
+  blue: { bg: "bg-sv-blue/15", text: "text-sv-blue" },
+  indigo: { bg: "bg-indigo-500/15", text: "text-indigo-600" },
+  rose: { bg: "bg-rose-500/15", text: "text-rose-600" },
+};
+
 const coreServices = [
   {
     icon: Brain,
     title: "AI Automation",
     desc: "Intelligent workflows that automate lead generation, sales processes, and client engagement at scale.",
+    color: "violet" as const,
+    href: "/workflows",
   },
   {
     icon: Globe,
     title: "Digital Marketing",
     desc: "Data-driven campaigns that reach the right audience with precision targeting and measurable ROI.",
+    color: "orange" as const,
+    href: "/marketing-media",
   },
   {
     icon: Code,
     title: "Web Design & Development",
     desc: "Modern, responsive websites and web applications built with cutting-edge technology stacks.",
+    color: "emerald" as const,
+    href: "/services#web",
   },
   {
     icon: BarChart3,
     title: "Technology Consulting",
     desc: "Strategic guidance on digital transformation, system architecture, and technology adoption.",
+    color: "blue" as const,
+    href: "/services#consulting",
   },
   {
     icon: Zap,
     title: "Custom Development",
     desc: "Bespoke applications tailored to your unique business requirements and growth objectives.",
+    color: "indigo" as const,
+    href: "/services#software",
   },
   {
     icon: Film,
     title: "Video/Audio Editing",
     desc: "Professional video and audio editing for social media — create engaging content that stands out on your channels.",
+    color: "rose" as const,
+    href: "/services#video",
   },
 ];
 
@@ -73,7 +93,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* ===== HERO SECTION ===== */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section id="section-hero" className="relative min-h-screen flex items-center overflow-hidden">
         <div className="absolute inset-0">
           {/* Animated gradient background — blue/purple with yellow accents */}
           <div className="hero-animated-bg absolute inset-0" aria-hidden />
@@ -134,16 +154,18 @@ export default function Home() {
               Through AI & Innovation
             </motion.h1>
 
-            <motion.p
-              className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"
+            <motion.div
+              className="mx-auto max-w-2xl"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              We combine artificial intelligence with proven marketing strategies
-              to deliver automated lead generation, sales workflows, and custom
-              technology solutions that drive measurable growth.
-            </motion.p>
+              <p className="text-center text-lg sm:text-xl text-white font-light leading-relaxed tracking-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.3)]">
+                We combine artificial intelligence with proven marketing strategies
+                to deliver automated lead generation, sales workflows, and custom
+                technology solutions that drive measurable growth.
+              </p>
+            </motion.div>
 
             <motion.div
               className="flex flex-wrap justify-center gap-4"
@@ -152,45 +174,32 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               <Link href="/services">
-                <span className="inline-flex items-center gap-2 px-6 py-3 text-xs font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-sv-blue to-sv-blue-light hover:opacity-95 rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
                   Explore Our Services
-                  <ArrowRight size={14} />
+                  <ArrowRight size={15} />
                 </span>
               </Link>
               <Link href="/contact">
-                <span className="inline-flex items-center gap-2 px-6 py-3 text-xs font-semibold text-foreground/80 hover:text-foreground border border-border rounded-xl transition-all duration-200 hover:bg-muted/50">
+                <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-950 to-purple-900 hover:opacity-95 rounded-xl transition-all duration-200 shadow-lg shadow-purple-950/40">
                   Schedule a Consultation
+                  <ArrowRight size={15} />
                 </span>
               </Link>
             </motion.div>
           </div>
         </div>
 
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-5 h-8 rounded-full border-2 border-foreground/30 flex items-start justify-center p-1">
-            <motion.div
-              className="w-1 h-2 rounded-full bg-foreground/50"
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-        </motion.div>
+        <ScrollDownButton to="section-services" light className="bottom-8" />
       </section>
 
       {/* ===== CORE SERVICES ===== */}
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
-      <section className="py-24 lg:py-32 relative">
+      <section id="section-services" className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
         <div className="container relative">
           <AnimatedSection>
-            <div className="text-center mb-16">
-              <div className="section-accent mx-auto mb-4" />
+            <div className="text-center mb-10">
               <span className="section-label text-sv-blue/60 mb-4 inline-block">What We Do</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+              <h2 className="font-[Sora] text-2xl sm:text-3xl lg:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Technology Assistance Where You Need It
               </h2>
               <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">
@@ -199,62 +208,61 @@ export default function Home() {
             </div>
           </AnimatedSection>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-2">
             {coreServices.map((service, i) => (
               <AnimatedSection key={service.title} delay={i * 0.08}>
-                <div className="group relative rounded-2xl glass-card glass-card-hover p-7 transition-all duration-300 h-full">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-sv-blue/15 to-sv-blue/5 flex items-center justify-center mb-5">
-                    <service.icon className="w-5 h-5 text-sv-blue" />
+                <Link href={service.href}>
+                  <div className="group relative rounded-2xl glass-card glass-card-hover p-7 transition-all duration-300 h-full flex flex-col">
+                    <div
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${serviceIconColors[service.color].bg}`}
+                    >
+                      <service.icon className={`w-5 h-5 ${serviceIconColors[service.color].text}`} />
+                    </div>
+                    <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">
+                      {service.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                      {service.desc}
+                    </p>
+                    <span className={`mt-5 inline-flex items-center gap-2 text-sm font-medium ${serviceIconColors[service.color].text} group-hover:gap-3 transition-all`}>
+                      Learn more <ArrowRight size={14} />
+                    </span>
                   </div>
-                  <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">
-                    {service.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {service.desc}
-                  </p>
-                </div>
+                </Link>
               </AnimatedSection>
             ))}
           </div>
-
-          <AnimatedSection delay={0.4}>
-            <div className="mt-12 text-center">
-              <Link href="/services">
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors">
-                  View All Services <ArrowRight size={14} />
-                </span>
-              </Link>
-            </div>
-          </AnimatedSection>
+        </div>
+        <div className="relative pb-8">
+          <ScrollDownButton to="section-workflows" className="!relative !bottom-0 py-4" />
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
-      {/* ===== PRE-BUILT WORKFLOWS ===== */}
-      <section className="py-24 lg:py-32 relative overflow-hidden">
+      <section id="section-workflows" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
-        <div className="container relative">
+        <div className="container relative flex flex-col gap-8">
+          {/* Workflows */}
           <Link href="/workflows">
             <AnimatedSection>
-              <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500">
+              <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500 border border-transparent hover:border-sv-blue/20">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                   <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-xl bg-sv-blue/10 flex items-center justify-center flex-shrink-0">
+                    <div className="w-14 h-14 rounded-xl bg-sv-blue/10 flex items-center justify-center flex-shrink-0 shadow-sm">
                       <Workflow className="w-7 h-7 text-sv-blue" />
                     </div>
                     <div>
                       <span className="section-label text-sv-blue/60 mb-2 inline-block">Pre-Built for Sales Teams</span>
-                      <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-3">
+                      <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold uppercase tracking-tight mb-3 gradient-text-logo">
                         AI Workflows for Individual Agents & Small Teams
                       </h2>
-                      <p className="text-muted-foreground max-w-2xl">
+                      <p className="text-muted-foreground max-w-2xl text-base">
                         Ready-to-use automation workflows for Insurance, Travel Agents, and Real Estate. Get started quickly — no enterprise setup required.
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 lg:flex-shrink-0">
                     {["Insurance", "Travel Agents", "Real Estate"].map((industry) => (
-                      <span key={industry} className="px-4 py-2 rounded-lg bg-muted/80 text-sm text-muted-foreground border border-border">
+                      <span key={industry} className="px-4 py-2 rounded-lg bg-sv-blue/5 text-sm font-medium text-sv-blue border border-sv-blue/20">
                         {industry}
                       </span>
                     ))}
@@ -266,13 +274,109 @@ export default function Home() {
               </div>
             </AnimatedSection>
           </Link>
-        </div>
-      </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
-      {/* ===== STATS ===== */}
-      <section className="py-24 lg:py-32 relative">
-        <div className="container">
+          {/* Marketing/Media */}
+          <Link href="/marketing-media">
+            <AnimatedSection delay={0.05}>
+              <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500 border border-transparent hover:border-tv-orange/20">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+                  <div className="flex items-start gap-5">
+                    <div className="w-14 h-14 rounded-xl bg-tv-orange/10 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Megaphone className="w-7 h-7 text-tv-orange" />
+                    </div>
+                    <div>
+                      <span className="section-label text-tv-orange/60 mb-2 inline-block">Content & Campaigns</span>
+                      <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold uppercase tracking-tight mb-3 gradient-text-logo">
+                        Marketing & Media at Scale
+                      </h2>
+                      <p className="text-muted-foreground max-w-2xl text-base">
+                        Digital marketing, social media, video production, and creative design. We create content and campaigns that reach your audience and drive conversions.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 lg:flex-shrink-0">
+                    {["SEO & Ads", "Social Media", "Video & Reels", "Creative Design"].map((tag) => (
+                      <span key={tag} className="px-4 py-2 rounded-lg bg-tv-orange/5 text-sm font-medium text-tv-orange border border-tv-orange/20">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-tv-orange group-hover:gap-3 transition-all">
+                  Explore Marketing & Media <ArrowRight size={14} />
+                </div>
+              </div>
+            </AnimatedSection>
+          </Link>
+
+          {/* Integrations */}
+          <Link href="/integrations">
+            <AnimatedSection delay={0.1}>
+              <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500 border border-transparent hover:border-violet-500/20">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+                  <div className="flex items-start gap-5">
+                    <div className="w-14 h-14 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Plug2 className="w-7 h-7 text-violet-600" />
+                    </div>
+                    <div>
+                      <span className="section-label text-violet-600/60 mb-2 inline-block">Connect Your Stack</span>
+                      <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold uppercase tracking-tight mb-3 gradient-text-logo">
+                        Integrations & Tools We Use
+                      </h2>
+                      <p className="text-muted-foreground max-w-2xl text-base">
+                        CRM, automation, AI voice, scheduling, and marketing tools. We integrate with 25+ platforms so your workflows stay synced and running smoothly.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 lg:flex-shrink-0">
+                    {["CRM", "Zapier", "AI Voice", "Google Workspace"].map((tag) => (
+                      <span key={tag} className="px-4 py-2 rounded-lg bg-violet-500/5 text-sm font-medium text-violet-600 border border-violet-500/20">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-violet-600 group-hover:gap-3 transition-all">
+                  View Our Stack <ArrowRight size={14} />
+                </div>
+              </div>
+            </AnimatedSection>
+          </Link>
+
+          {/* Custom Development */}
+          <Link href="/custom-development">
+            <AnimatedSection delay={0.15}>
+              <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500 border border-transparent hover:border-indigo-500/20">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+                  <div className="flex items-start gap-5">
+                    <div className="w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Code className="w-7 h-7 text-indigo-600" />
+                    </div>
+                    <div>
+                      <span className="section-label text-indigo-600/60 mb-2 inline-block">Bespoke Solutions</span>
+                      <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold uppercase tracking-tight mb-3 gradient-text-logo">
+                        Custom Development & Applications
+                      </h2>
+                      <p className="text-muted-foreground max-w-2xl text-base">
+                        When off-the-shelf falls short, we build web apps, APIs, and automation tools tailored to your workflow. Scalable, secure, and built to grow with you.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 lg:flex-shrink-0">
+                    {["Web Apps", "APIs", "Databases", "Automation"].map((tag) => (
+                      <span key={tag} className="px-4 py-2 rounded-lg bg-indigo-500/5 text-sm font-medium text-indigo-600 border border-indigo-500/20">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-indigo-600 group-hover:gap-3 transition-all">
+                  Explore Custom Development <ArrowRight size={14} />
+                </div>
+              </div>
+            </AnimatedSection>
+          </Link>
+
           <AnimatedSection>
             <div className="rounded-2xl glass-card p-10 lg:p-16">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -285,7 +389,7 @@ export default function Home() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1, duration: 0.6 }}
                   >
-                    <stat.icon className="w-6 h-6 text-sv-blue mx-auto mb-3 opacity-60" />
+                    <stat.icon className={`w-6 h-6 mx-auto mb-3 opacity-60 ${statIconColors[i % statIconColors.length]}`} />
                     <div className="font-[Sora] text-3xl sm:text-4xl font-bold text-foreground mb-1">
                       {stat.value}
                     </div>
@@ -296,16 +400,20 @@ export default function Home() {
             </div>
           </AnimatedSection>
         </div>
+
+        <div className="relative pb-8">
+          <ScrollDownButton to="section-cta" className="!relative !bottom-0 py-4" />
+        </div>
       </section>
 
       <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== CTA SECTION ===== */}
-      <section className="py-24 lg:py-32 relative overflow-hidden">
+      <section id="section-cta" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
                 Ready to Transform Your Business?
               </h2>
               <p className="mt-5 text-muted-foreground text-lg">
@@ -324,7 +432,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                 >
                   <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-foreground/80 hover:text-foreground border border-border rounded-xl transition-all duration-200 hover:bg-muted/50">
-                    About
+                    About Me
                   </span>
                 </a>
               </div>
@@ -335,13 +443,12 @@ export default function Home() {
 
       <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== OUR DIVISIONS ===== */}
-      <section className="py-24 lg:py-32 relative">
+      <section id="section-divisions" className="py-24 lg:py-32 relative">
         <div className="container">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <div className="section-accent mx-auto mb-4" />
               <span className="section-label text-muted-foreground mb-4 inline-block">Our Divisions</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
                 Two Visions, One Mission
               </h2>
               <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">

@@ -6,6 +6,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
+import ScrollDownButton from "@/components/ScrollDownButton";
 import {
   ArrowRight,
   Shield,
@@ -77,19 +78,19 @@ const stats = [
 
 export default function Workflows() {
   return (
-    <div className="min-h-screen bg-brand-darker dark">
+    <div className="min-h-screen">
       {/* ===== HERO ===== */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
+      <section id="section-hero" className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={WORKFLOWS_BG} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-darker/80 via-brand-darker/60 to-brand-darker" />
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-darker/90 via-transparent to-transparent" />
+          <img src={WORKFLOWS_BG} alt="" className="w-full h-full object-cover object-center opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-white/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-transparent to-transparent" />
         </div>
 
         <div className="relative container pt-32 pb-20">
           <div className="max-w-3xl">
             <motion.span
-              className="section-label text-white/85 mb-6 inline-block"
+              className="section-label text-sv-blue/60 mb-6 inline-block"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -97,7 +98,7 @@ export default function Workflows() {
               Pre-Built Workflows
             </motion.span>
             <motion.h1
-              className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight"
+              className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] tracking-tight"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
@@ -107,7 +108,7 @@ export default function Workflows() {
               <span className="gradient-text-blue">Sales Agents & Small Teams</span>
             </motion.h1>
             <motion.p
-              className="mt-6 text-lg text-white/90 leading-relaxed max-w-xl"
+              className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
@@ -116,37 +117,22 @@ export default function Workflows() {
             </motion.p>
           </div>
         </div>
+        <ScrollDownButton to="section-stats" className="bottom-8" />
       </section>
 
       {/* ===== STATS ===== */}
-      <section className="py-16 lg:py-20 border-y border-white/10">
+      <section id="section-stats" className="py-16 lg:py-20 border-y border-border">
         <div className="container">
           <div className="grid grid-cols-3 gap-8 lg:gap-12">
             {stats.map((stat, i) => (
               <AnimatedSection key={stat.label} delay={i * 0.08}>
                 <div className="text-center">
-                  <p className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                  <p className="font-[Sora] text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
                     {stat.value}
                   </p>
-                  <p className="mt-1 text-sm text-white/80">{stat.label}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
                 </div>
               </AnimatedSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== STATS ===== */}
-      <section className="py-16 lg:py-20 border-y border-white/10">
-        <div className="container">
-          <div className="grid grid-cols-3 gap-8 lg:gap-12">
-            {stats.map((stat, i) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-sm text-white/80">{stat.label}</p>
-              </div>
             ))}
           </div>
         </div>
@@ -159,12 +145,11 @@ export default function Workflows() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <div className="section-accent mx-auto mb-4" />
-              <span className="section-label text-white/80 mb-4 inline-block">Target Industries</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+              <span className="section-label text-sv-blue/60 mb-4 inline-block">Target Industries</span>
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
                 Workflows by Industry
               </h2>
-              <p className="mt-4 text-white/85 max-w-2xl mx-auto text-lg">
+              <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">
                 Our pre-built workflows are designed for the unique sales cycles and compliance needs of each industry.
               </p>
             </div>
@@ -182,10 +167,10 @@ export default function Workflows() {
                       </div>
                       <span className={`section-label ${industry.labelColor}`}>{industry.tagline}</span>
                     </div>
-                    <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-white tracking-tight mb-4">
+                    <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4">
                       {industry.title}
                     </h2>
-                    <p className="text-white/85 leading-relaxed text-base mb-6">
+                    <p className="text-muted-foreground leading-relaxed text-base mb-6">
                       {industry.desc}
                     </p>
                     <Link href="/contact">
@@ -196,17 +181,17 @@ export default function Workflows() {
                   </div>
                   <div className={i % 2 === 1 ? "lg:order-1" : ""}>
                     <div className="rounded-2xl glass-card p-7">
-                      <h4 className="font-[Sora] text-sm font-semibold text-white/90 mb-5 uppercase tracking-wider">
+                      <h4 className="font-[Sora] text-sm font-semibold text-foreground mb-5 uppercase tracking-wider">
                         Included Workflows
                       </h4>
                       <div className="space-y-3">
                         {industry.workflows.map((workflow) => (
                           <div
                             key={workflow}
-                            className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+                            className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
                           >
                             <Workflow className="w-5 h-5 text-sv-blue flex-shrink-0" />
-                            <span className="text-sm text-white/90">{workflow}</span>
+                            <span className="text-sm text-muted-foreground">{workflow}</span>
                           </div>
                         ))}
                       </div>
@@ -226,9 +211,8 @@ export default function Workflows() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <div className="section-accent mx-auto mb-4" />
               <span className="section-label text-sv-blue/60 mb-4 inline-block">Built for You</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Why Our Workflows
               </h2>
             </div>
@@ -237,23 +221,23 @@ export default function Workflows() {
           <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <AnimatedSection delay={0.1}>
               <div className="rounded-2xl glass-card p-6 text-center">
-                <Zap className="w-10 h-10 text-sv-blue mx-auto mb-4" />
-                <h3 className="font-[Sora] text-lg font-semibold text-white mb-2">Ready to Go</h3>
-                <p className="text-sm text-white/85">Pre-built and configurable. No long custom build-outs — launch in days, not months.</p>
+                <Zap className="w-10 h-10 text-amber-600 mx-auto mb-4" />
+                <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">Ready to Go</h3>
+                <p className="text-sm text-muted-foreground">Pre-built and configurable. No long custom build-outs — launch in days, not months.</p>
               </div>
             </AnimatedSection>
             <AnimatedSection delay={0.15}>
               <div className="rounded-2xl glass-card p-6 text-center">
-                <Target className="w-10 h-10 text-sv-blue mx-auto mb-4" />
-                <h3 className="font-[Sora] text-lg font-semibold text-white mb-2">Industry-Specific</h3>
-                <p className="text-sm text-white/85">Designed for your industry's sales cycle, compliance needs, and common objections.</p>
+                <Target className="w-10 h-10 text-emerald-600 mx-auto mb-4" />
+                <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">Industry-Specific</h3>
+                <p className="text-sm text-muted-foreground">Designed for your industry's sales cycle, compliance needs, and common objections.</p>
               </div>
             </AnimatedSection>
             <AnimatedSection delay={0.2}>
               <div className="rounded-2xl glass-card p-6 text-center">
                 <Workflow className="w-10 h-10 text-sv-blue mx-auto mb-4" />
-                <h3 className="font-[Sora] text-lg font-semibold text-white mb-2">Scalable</h3>
-                <p className="text-sm text-white/85">Start as a solo agent and grow. Add more workflows or team seats as you scale.</p>
+                <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">Scalable</h3>
+                <p className="text-sm text-muted-foreground">Start as a solo agent and grow. Add more workflows or team seats as you scale.</p>
               </div>
             </AnimatedSection>
           </div>
@@ -267,10 +251,10 @@ export default function Workflows() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Ready to Automate Your Sales?
               </h2>
-              <p className="mt-5 text-white/85 text-lg">
+              <p className="mt-5 text-muted-foreground text-lg">
                 Tell us which industry you're in and we'll show you how our workflows can help you close more deals.
               </p>
               <div className="mt-10">

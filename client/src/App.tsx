@@ -8,6 +8,8 @@ import Home from "./pages/Home";
 import Services from "./pages/Services";
 import Workflows from "./pages/Workflows";
 import Integrations from "./pages/Integrations";
+import MarketingMedia from "./pages/MarketingMedia";
+import CustomDevelopment from "./pages/CustomDevelopment";
 import Contact from "./pages/Contact";
 import Learn from "./pages/Learn";
 import LearnArticle from "./pages/LearnArticle";
@@ -24,6 +26,8 @@ function Router() {
       <Route path="/services" component={Services} />
       <Route path="/workflows" component={Workflows} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/marketing-media" component={MarketingMedia} />
+      <Route path="/custom-development" component={CustomDevelopment} />
       <Route path="/contact" component={Contact} />
       <Route path="/learn" component={Learn} />
       <Route path="/learn/:slug" component={LearnArticle} />

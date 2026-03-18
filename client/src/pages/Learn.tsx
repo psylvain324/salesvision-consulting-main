@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { learnArticles } from "@/content/learnArticles";
 
+const HERO_BG = "/Images/Background_Futuristic_1.jpeg";
+
 const recentPosts = [
   {
     id: 1,
@@ -87,7 +89,7 @@ const courseAreas = [
     desc: "Automate lead generation, follow-ups, and CRM workflows for your team.",
     modules: 8,
     duration: "~5 hours",
-    color: "sv-blue",
+    color: "violet",
   },
   {
     id: "technology-consulting",
@@ -96,7 +98,7 @@ const courseAreas = [
     desc: "Strategic guidance on digital transformation and system architecture.",
     modules: 4,
     duration: "~2.5 hours",
-    color: "tv-orange",
+    color: "emerald",
   },
 ];
 
@@ -210,21 +212,49 @@ export default function Learn() {
   return (
     <div className="min-h-screen">
       {/* ===== HERO ===== */}
-      <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/[0.03] via-transparent to-tv-orange/[0.03]" />
-        <div className="container relative">
+      <section id="section-hero" className="relative min-h-screen flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="hero-animated-bg absolute inset-0" aria-hidden />
+          <img
+            src={HERO_BG}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-40 hero-bg-drift"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-white/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-transparent to-transparent" />
+        </div>
+
+        <motion.div
+          className="absolute top-1/4 right-1/4 w-[32rem] h-[32rem] rounded-full bg-sv-blue/30 blur-[100px]"
+          animate={{ x: [0, 80, 0], y: [0, -40, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-1/4 left-1/4 w-[28rem] h-[28rem] rounded-full bg-purple-500/25 blur-[80px]"
+          animate={{ x: [0, -60, 0], y: [0, 30, 0], scale: [1, 0.9, 1] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-72 h-72 rounded-full bg-amber-400/20 blur-[60px]"
+          animate={{ x: [0, 40, 0], y: [0, -20, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <div className="relative container pt-20 pb-16 lg:pt-24 lg:pb-24 min-h-[80vh] flex flex-col items-center justify-start text-center">
           <AnimatedSection>
-            <div className="max-w-3xl">
-              <span className="section-label text-sv-blue mb-4 inline-block">
+            <div className="w-full max-w-3xl mx-auto flex flex-col items-center gap-6 sm:gap-8 pt-8 lg:pt-12">
+              <span className="section-label text-white mb-4 inline-block">
                 Learn
               </span>
-              <h1 className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] tracking-tight">
-                Insights &{" "}
-                <span className="gradient-text-blue">Articles</span>
+              <h1 className="font-[Sora] hero-masked-text leading-[1.08] tracking-tight">
+                Insights & Articles
               </h1>
-              <p className="mt-6 text-lg text-gray-600 leading-relaxed max-w-xl">
+              <p className="text-center text-base sm:text-lg text-white font-light leading-relaxed tracking-tight max-w-2xl">
                 Stay ahead with our latest articles on AI automation, digital marketing,
-                and technology. Explore our learning paths to grow your skills.
+                and technology consulting. From practical guides on building your first
+                sales automation workflow to deep dives on AI-driven lead generation,
+                we share actionable insights to help you grow. Explore our learning paths,
+                step-by-step tutorials, and expert perspectives to level up your skills.
               </p>
             </div>
           </AnimatedSection>
@@ -232,12 +262,11 @@ export default function Learn() {
       </section>
 
       {/* ===== RECENT POSTS CAROUSEL ===== */}
-      <section className="py-16 lg:py-24 bg-gray-50/50">
+      <section id="section-posts" className="py-16 lg:py-24 bg-gray-50/50 scroll-mt-24">
         <div className="container">
           <AnimatedSection>
             <div className="flex items-end justify-between gap-4 mb-10">
               <div>
-                <div className="section-accent mb-4" />
                 <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                   Recent Posts
                 </h2>
@@ -260,15 +289,14 @@ export default function Learn() {
       </section>
 
       {/* ===== ARTICLE TOPICS ===== */}
-      <section className="py-24 lg:py-32">
+      <section id="section-topics" className="py-24 lg:py-32 scroll-mt-24">
         <div className="container">
           <AnimatedSection>
             <div className="text-center mb-16">
-              <div className="section-accent mx-auto mb-4" />
               <span className="section-label text-sv-blue/80 mb-4 inline-block">
                 Article Topics
               </span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
                 Explore articles
               </h2>
               <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-lg">
@@ -286,7 +314,11 @@ export default function Learn() {
                     className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${
                       course.color === "sv-blue"
                         ? "bg-sv-blue/10 text-sv-blue"
-                        : "bg-tv-orange/10 text-tv-orange"
+                        : course.color === "tv-orange"
+                          ? "bg-tv-orange/10 text-tv-orange"
+                          : course.color === "violet"
+                            ? "bg-violet-500/15 text-violet-600"
+                            : "bg-emerald-500/15 text-emerald-600"
                     }`}
                   >
                     <course.icon className="w-6 h-6" />
@@ -324,7 +356,6 @@ export default function Learn() {
         <div className="container">
           <AnimatedSection>
             <div className="mb-12">
-              <div className="section-accent mb-4" />
               <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                 All Articles
               </h2>
@@ -361,7 +392,7 @@ export default function Learn() {
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto rounded-2xl border border-gray-200 bg-white p-10 lg:p-14 shadow-sm">
               <BookOpen className="w-12 h-12 text-sv-blue mx-auto mb-4 opacity-80" />
-              <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold uppercase tracking-tight gradient-text-logo">
                 Ready to Level Up?
               </h2>
               <p className="mt-4 text-gray-600">

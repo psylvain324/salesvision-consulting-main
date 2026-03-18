@@ -56,19 +56,28 @@ const timeline = [
   },
 ];
 
+const valueIconColors: Record<string, { bg: string; text: string }> = {
+  amber: { bg: "bg-amber-500/15", text: "text-amber-500" },
+  emerald: { bg: "bg-emerald-500/15", text: "text-emerald-500" },
+  blue: { bg: "bg-sv-blue/15", text: "text-sv-blue" },
+};
+
 const values = [
   {
     icon: Lightbulb,
+    color: "amber" as const,
     title: "Innovation First",
     desc: "Constantly exploring emerging technologies to deliver cutting-edge solutions that give our clients a competitive edge.",
   },
   {
     icon: Briefcase,
+    color: "emerald" as const,
     title: "Results-Driven",
     desc: "Every project is measured by its impact on business outcomes — leads generated, revenue increased, efficiency gained.",
   },
   {
     icon: GraduationCap,
+    color: "blue" as const,
     title: "Continuous Learning",
     desc: "The technology landscape evolves rapidly. We stay ahead by investing in continuous education and experimentation.",
   },
@@ -196,7 +205,7 @@ export default function About() {
           <AnimatedSection>
             <div className="text-center mb-16">
               <span className="section-label text-white/80 mb-4 inline-block">The Journey</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Building the Vision
               </h2>
             </div>
@@ -237,7 +246,7 @@ export default function About() {
           <AnimatedSection>
             <div className="text-center mb-16">
               <span className="section-label text-sv-blue/60 mb-4 inline-block">Technical Expertise</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Skills & Technologies
               </h2>
             </div>
@@ -274,7 +283,7 @@ export default function About() {
           <AnimatedSection>
             <div className="text-center mb-16">
               <span className="section-label text-white/80 mb-4 inline-block">Philosophy</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 What Drives Us
               </h2>
             </div>
@@ -284,8 +293,8 @@ export default function About() {
             {values.map((value, i) => (
               <AnimatedSection key={value.title} delay={i * 0.1}>
                 <div className="rounded-2xl glass-card p-8 h-full text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-sv-blue/10 flex items-center justify-center mx-auto mb-5">
-                    <value.icon className="w-7 h-7 text-sv-blue" />
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 ${valueIconColors[value.color].bg}`}>
+                    <value.icon className={`w-7 h-7 ${valueIconColors[value.color].text}`} />
                   </div>
                   <h3 className="font-[Sora] text-lg font-semibold text-white mb-3">
                     {value.title}
@@ -319,7 +328,7 @@ export default function About() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Let's Work Together
               </h2>
               <p className="mt-5 text-white/85 text-lg">

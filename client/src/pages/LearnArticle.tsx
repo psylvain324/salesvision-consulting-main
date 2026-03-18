@@ -48,12 +48,53 @@ function LearnArticlePage() {
   }
 
   const hasPdf = Boolean(article.pdfPath);
+  const showToc = article.sections.length >= 2 || (article.sections.length >= 1 && hasPdf);
 
   return (
     <div className="min-h-screen">
       <div className="pt-24 pb-16 lg:pb-24">
         <div className="container">
-          <div className="max-w-4xl mx-auto flex flex-col lg:flex-row gap-12">
+          <div
+            className={`mx-auto flex flex-col gap-12 ${
+              showToc ? "max-w-6xl lg:flex-row lg:gap-16" : "max-w-4xl"
+            }`}
+          >
+            {showToc && (
+              <aside className="hidden lg:block shrink-0 w-52 order-first">
+                <div className="sticky top-28">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+                    On this page
+                  </p>
+                  <nav className="space-y-1 border-l-2 border-gray-200 pl-4">
+                    {article.sections.map((s) => (
+                      <a
+                        key={s.id}
+                        href={`#${s.id}`}
+                        className={`block text-sm py-1.5 -ml-4 pl-4 border-l-2 -mt-px transition-colors ${
+                          activeId === s.id
+                            ? "border-sv-blue text-sv-blue font-medium"
+                            : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
+                        }`}
+                      >
+                        {s.title}
+                      </a>
+                    ))}
+                    {hasPdf && (
+                      <a
+                        href="#pdf-viewer"
+                        className={`block text-sm py-1.5 -ml-4 pl-4 border-l-2 -mt-px transition-colors ${
+                          activeId === "pdf-viewer"
+                            ? "border-sv-blue text-sv-blue font-medium"
+                            : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
+                        }`}
+                      >
+                        View PDF
+                      </a>
+                    )}
+                  </nav>
+                </div>
+              </aside>
+            )}
             <main className="min-w-0 flex-1">
               <h1 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight">
                 {article.title}
@@ -100,34 +141,6 @@ function LearnArticlePage() {
                 ))}
               </div>
             </main>
-            <aside className="hidden lg:block shrink-0 w-56">
-              <div className="sticky top-24">
-                <p className="text-sm font-semibold text-gray-900 mb-3">On this page</p>
-                <nav className="space-y-1">
-                  {article.sections.map((s) => (
-                    <a
-                      key={s.id}
-                      href={`#${s.id}`}
-                      className={`block text-sm py-1 transition-colors ${
-                        activeId === s.id ? "text-sv-blue font-medium" : "text-gray-500 hover:text-gray-900"
-                      }`}
-                    >
-                      {s.title}
-                    </a>
-                  ))}
-                  {hasPdf && (
-                    <a
-                      href="#pdf-viewer"
-                      className={`block text-sm py-1 transition-colors ${
-                        activeId === "pdf-viewer" ? "text-sv-blue font-medium" : "text-gray-500 hover:text-gray-900"
-                      }`}
-                    >
-                      View PDF
-                    </a>
-                  )}
-                </nav>
-              </div>
-            </aside>
           </div>
         </div>
       </div>

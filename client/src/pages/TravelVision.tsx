@@ -265,7 +265,7 @@ export default function TravelVision() {
           <AnimatedSection>
             <div className="text-center mb-16">
               <span className="section-label text-tv-orange/60 mb-4 inline-block">Travel Services</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
                 Your Journey Starts Here
               </h2>
               <motion.p
@@ -310,7 +310,7 @@ export default function TravelVision() {
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <div>
                 <span className="section-label text-tv-orange/60 mb-4 inline-block">Why TravelVision</span>
-                <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                   Technology Meets Wanderlust
                 </h2>
                 <p className="mt-5 text-white/85 leading-relaxed text-lg">
@@ -361,7 +361,7 @@ export default function TravelVision() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-4xl sm:text-5xl lg:text-6xl font-bold uppercase tracking-tight gradient-text-logo">
                 Find Your Next Amazing Adventure
               </h2>
               <p className="mt-5 text-white/85 text-lg">

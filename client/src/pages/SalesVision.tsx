@@ -21,34 +21,49 @@ import {
 
 const SV_HERO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663397693691/kUiTSqrNT343A8hDu8MEPH/salesvision-hero-WBCaH6QcGMY6Umd2bjAm5S.webp";
 
+const serviceIconColors: Record<string, { bg: string; text: string }> = {
+  blue: { bg: "bg-sv-blue/10", text: "text-sv-blue" },
+  violet: { bg: "bg-violet-500/15", text: "text-violet-500" },
+  emerald: { bg: "bg-emerald-500/15", text: "text-emerald-500" },
+  orange: { bg: "bg-amber-500/15", text: "text-amber-500" },
+  indigo: { bg: "bg-indigo-500/15", text: "text-indigo-500" },
+  rose: { bg: "bg-rose-500/15", text: "text-rose-500" },
+};
+
 const services = [
   {
     icon: Target,
+    color: "blue" as const,
     title: "AI Lead Generation",
     desc: "Our proprietary AI algorithms identify and qualify high-intent prospects in the health insurance market, delivering warm leads directly to your sales team with detailed prospect profiles and engagement scores.",
   },
   {
     icon: Workflow,
+    color: "violet" as const,
     title: "Automated Sales Workflows",
     desc: "End-to-end sales automation that nurtures leads through personalized email sequences, SMS follow-ups, and intelligent scheduling — converting prospects into clients while you focus on closing deals.",
   },
   {
     icon: UserPlus,
+    color: "emerald" as const,
     title: "Recruitment Services",
     desc: "AI-driven recruitment solutions that identify, screen, and engage top talent for health insurance agencies. We automate the hiring pipeline so you can scale your team efficiently.",
   },
   {
     icon: Megaphone,
+    color: "orange" as const,
     title: "Digital Marketing Campaigns",
     desc: "Data-driven marketing campaigns across social media, search engines, and display networks, specifically optimized for the health insurance vertical with compliance-aware messaging.",
   },
   {
     icon: BarChart3,
+    color: "indigo" as const,
     title: "Analytics & Reporting",
     desc: "Real-time dashboards and comprehensive reporting that track every touchpoint in your sales funnel, providing actionable insights to optimize conversion rates and ROI.",
   },
   {
     icon: Shield,
+    color: "rose" as const,
     title: "Compliance & Security",
     desc: "All our solutions are built with HIPAA compliance and data security at the core, ensuring your client data and marketing practices meet the highest regulatory standards.",
   },
@@ -141,7 +156,7 @@ export default function SalesVision() {
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <div>
                 <span className="section-label text-sv-blue/60 mb-4 inline-block">Industry Focus</span>
-                <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                   Built for the Health Insurance Market
                 </h2>
                 <p className="mt-5 text-white/40 leading-relaxed text-lg">
@@ -152,13 +167,13 @@ export default function SalesVision() {
                 </p>
                 <div className="mt-8 grid grid-cols-2 gap-4">
                   {[
-                    { icon: HeartPulse, label: "ACA & Medicare" },
-                    { icon: Shield, label: "HIPAA Compliant" },
-                    { icon: Users, label: "Agent Recruitment" },
-                    { icon: Brain, label: "AI-Driven Insights" },
+                    { icon: HeartPulse, label: "ACA & Medicare", color: "text-rose-500" },
+                    { icon: Shield, label: "HIPAA Compliant", color: "text-emerald-500" },
+                    { icon: Users, label: "Agent Recruitment", color: "text-sv-blue" },
+                    { icon: Brain, label: "AI-Driven Insights", color: "text-violet-500" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03]">
-                      <item.icon className="w-5 h-5 text-sv-blue flex-shrink-0" />
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${item.color}`} />
                       <span className="text-sm text-white/60 font-medium">{item.label}</span>
                     </div>
                   ))}
@@ -201,7 +216,7 @@ export default function SalesVision() {
           <AnimatedSection>
             <div className="text-center mb-16">
               <span className="section-label text-sv-blue/60 mb-4 inline-block">Our Services</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
                 What We Deliver
               </h2>
             </div>
@@ -211,8 +226,8 @@ export default function SalesVision() {
             {services.map((service, i) => (
               <AnimatedSection key={service.title} delay={i * 0.08}>
                 <div className="group rounded-2xl glass-card glass-card-hover p-7 transition-all duration-300 h-full">
-                  <div className="w-11 h-11 rounded-xl bg-sv-blue/10 flex items-center justify-center mb-5 group-hover:bg-sv-blue/15 transition-colors">
-                    <service.icon className="w-5 h-5 text-sv-blue" />
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 transition-colors ${serviceIconColors[service.color].bg} group-hover:opacity-90`}>
+                    <service.icon className={`w-5 h-5 ${serviceIconColors[service.color].text}`} />
                   </div>
                   <h3 className="font-[Sora] text-lg font-semibold text-white mb-2">
                     {service.title}
@@ -233,7 +248,7 @@ export default function SalesVision() {
           <AnimatedSection>
             <div className="text-center mb-16">
               <span className="section-label text-sv-blue/60 mb-4 inline-block">Our Process</span>
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 How We Work
               </h2>
             </div>
@@ -268,7 +283,7 @@ export default function SalesVision() {
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
                 Ready to Supercharge Your Sales Pipeline?
               </h2>
               <p className="mt-5 text-white/40 text-lg">

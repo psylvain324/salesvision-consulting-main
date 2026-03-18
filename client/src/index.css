@@ -87,7 +87,7 @@
 
 /* Light theme — VanRein-inspired, blue & orange accents */
 :root {
-  --radius: 0.625rem;
+  --radius: 2.25rem;
   /* Freitag-style soft background — applied sitewide */
   --background: oklch(0.98 0.004 260);
   --foreground: oklch(0.2 0.02 270);
@@ -219,10 +219,10 @@
     box-shadow: none;
   }
 
-  /* Section label style */
+  /* Section label style — text above section headers */
   .section-label {
     font-family: 'Sora', system-ui, sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -245,6 +245,14 @@
 
   .gradient-text-purple {
     background: linear-gradient(135deg, oklch(0.55 0.2 290), oklch(0.62 0.19 255));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Logo-style gradient — blue to purple, darker with more blue, matches SalesVision header logo */
+  .gradient-text-logo {
+    background: linear-gradient(90deg, oklch(0.40 0.17 260), oklch(0.46 0.18 268), oklch(0.52 0.19 285));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -449,4 +457,91 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* Scroll Down Button — CodePen nxworld/OyRrGy style #3 */
+.scroll-down-btn-03 {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 2.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: opacity 0.3s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.scroll-down-btn-03:hover {
+  opacity: 0.7;
+}
+.scroll-down-btn-03 .scroll-down-btn-03-icon {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+  border: 1px solid currentColor;
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+  box-shadow:
+    0 3px 4px -1px oklch(0.2 0.02 270 / 0.12),
+    0 1px 3px -2px oklch(0.2 0.02 270 / 0.08);
+}
+.scroll-down-btn-03 .scroll-down-btn-03-icon::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  content: "";
+  width: 12px;
+  height: 12px;
+  margin: -9px 0 0 -6px;
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  box-sizing: border-box;
+}
+.scroll-down-btn-03 .scroll-down-btn-03-icon::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  content: "";
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 0 0 0 rgba(var(--scroll-btn-color, 55, 65, 81), 0.1);
+  border-radius: 0.375rem;
+  opacity: 0;
+  animation: scroll-down-btn-03-pulse 3s infinite;
+  box-sizing: border-box;
+}
+.scroll-down-btn-03.scroll-down-btn-03--light {
+  color: #fff;
+  --scroll-btn-color: 255, 255, 255;
+}
+.scroll-down-btn-03.scroll-down-btn-03--light .scroll-down-btn-03-icon {
+  box-shadow:
+    0 4px 12px -2px oklch(0 0 0 / 0.25),
+    0 2px 6px -2px oklch(0 0 0 / 0.15);
+}
+.scroll-down-btn-03:not(.scroll-down-btn-03--light) {
+  color: oklch(0.35 0.02 270);
+  --scroll-btn-color: 55, 65, 81;
+}
+@keyframes scroll-down-btn-03-pulse {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  60% {
+    box-shadow: 0 0 0 18px rgba(var(--scroll-btn-color, 55, 65, 81), 0.1);
+    opacity: 0;
+  }
+  100% { opacity: 0; }
 }
