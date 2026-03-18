@@ -3,7 +3,7 @@
  * Sections: Workflows (with config), Settings (profile, bookings), Payment Methods, Membership.
  * Placeholder structure for future integration.
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link } from "wouter";
@@ -40,6 +40,14 @@ import {
   LayoutGrid,
   Layers,
   Settings2,
+  Target,
+  Image,
+  CalendarClock,
+  Lock,
+  LogIn,
+  LogOut,
+  CheckCircle2,
+  Save,
 } from "lucide-react";
 import {
   Dialog,
@@ -61,8 +69,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { login, logout, getCurrentUser, loginWithProvider } from "@/api/auth";
 
-type SectionId = "workflows" | "profile" | "bookings" | "leads" | "integrations" | "payment" | "membership";
+type SectionId = "workflows" | "profile" | "bookings" | "leads" | "integrations" | "marketing" | "payment" | "membership";
 
 const sidebarSections: { id: SectionId; label: string; icon: typeof Workflow }[] = [
   { id: "workflows", label: "Workflows", icon: Workflow },
@@ -70,6 +79,7 @@ const sidebarSections: { id: SectionId; label: string; icon: typeof Workflow }[]
   { id: "bookings", label: "Booking Availability", icon: CalendarIcon },
   { id: "leads", label: "Leads", icon: Users },
   { id: "integrations", label: "Integrations", icon: Plug2 },
+  { id: "marketing", label: "Marketing Campaigns", icon: Megaphone },
   { id: "payment", label: "Payment Methods", icon: CreditCard },
   { id: "membership", label: "Membership", icon: Crown },
 ];
@@ -84,12 +94,223 @@ const workflowTemplates = [
   { id: "cold-outreach", name: "Cold Outreach Campaign", desc: "Prospecting sequences; adds leads to cadence and updates based on engagement.", icon: Megaphone, iconBg: "bg-orange-500/10 text-orange-600" },
 ];
 
+const AUTH_STORAGE_KEY = "client-portal-auth";
+const STORAGE_KEYS = {
+  profile: "client-portal-profile",
+  bookings: "client-portal-bookings",
+  workflow: (id: string) => `client-portal-workflow-${id}`,
+  campaigns: "client-portal-campaigns",
+  integrations: "client-portal-integrations",
+} as const;
+
+function ClientPortalLogin({ onLogin }: { onLogin: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleBypass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await login({ email, password });
+    onLogin();
+  };
+
+  const handleSocialLogin = async (provider: "google" | "apple" | "amazon") => {
+    await loginWithProvider(provider);
+    onLogin();
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
+        <div className="text-center mb-8">
+          <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">
+            Sign in to Client Portal
+          </h1>
+          <p className="text-gray-600 text-sm">
+            Enter your credentials or sign in with a provider
+          </p>
+        </div>
+
+        <form onSubmit={handleBypass} className="space-y-4 mb-6">
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <Button type="submit" className="w-full" size="lg">
+            <LogIn className="w-4 h-4 mr-2" />
+            Sign in
+          </Button>
+        </form>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-gray-500">Or continue with</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex flex-col items-center gap-1 py-4 h-auto"
+            onClick={() => void handleSocialLogin("google")}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span className="text-xs font-medium">Google</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="flex flex-col items-center gap-1 py-4 h-auto"
+            onClick={() => void handleSocialLogin("apple")}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.23 2.67-3.16 4.13-3.74 4.25z"/>
+            </svg>
+            <span className="text-xs font-medium">Apple</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="flex flex-col items-center gap-1 py-4 h-auto"
+            onClick={() => void handleSocialLogin("amazon")}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#FF9900">
+              <path d="M15.23 17.99h-2.17l-1.2-3.63h-4.38L6.42 18H4.26L9.7 5.68h2.37l5.16 12.31zM8.53 12.82l2.12-6.24 2.13 6.24H8.53z"/>
+              <path d="M18.95 9.32c-.29-.12-.89-.25-1.49-.25-1.6 0-2.8 1.02-2.8 2.73 0 1.5.9 2.22 1.9 2.68 1.02.47 1.09.78 1.09 1.21 0 .61-.67.87-1.24.87-.83 0-1.3-.13-1.97-.45l-.27 1.4c.58.25 1.2.45 1.97.45 1.66 0 2.82-.96 2.82-2.84 0-1.41-.84-2.25-1.81-2.67-.98-.42-1.12-.7-1.12-1.12 0-.47.49-.85 1.2-.85.64 0 1.14.14 1.51.32l.27-1.38z"/>
+            </svg>
+            <span className="text-xs font-medium">Amazon</span>
+          </Button>
+        </div>
+      </div>
+      <p className="mt-6 text-xs text-gray-500 text-center max-w-md">
+        Bypass mode: any email/password will sign you in. Social logins require backend OAuth setup.
+      </p>
+    </div>
+  );
+}
+
 export default function ClientPortal() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then((r) => setIsAuthenticated(r.authenticated));
+  }, []);
   const [activeSection, setActiveSection] = useState<SectionId>("workflows");
   const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
   const [profileIndustry, setProfileIndustry] = useState("");
   const [profileJob, setProfileJob] = useState("");
   const [profileRole, setProfileRole] = useState("");
+
+  const handleLogout = async () => {
+    await logout();
+    setIsAuthenticated(false);
+  };
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-gray-400 text-sm">Loading...</div>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">Loading...</div>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <span className="text-sm text-gray-500">Loading...</span>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">Loading...</div>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-sm text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <span className="text-gray-500">Loading...</span>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <span className="text-sm text-gray-500">Loading...</span>
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return (
+      <ClientPortalLogin
+        onLogin={() => setIsAuthenticated(true)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,13 +322,19 @@ export default function ClientPortal() {
               Sales<span className="gradient-text-blue">Vision</span>
             </span>
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sv-blue/10 flex items-center justify-center">
-              <LayoutDashboard className="w-4 h-4 text-sv-blue" strokeWidth={2} />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-sv-blue/10 flex items-center justify-center">
+                <LayoutDashboard className="w-4 h-4 text-sv-blue" strokeWidth={2} />
+              </div>
+              <span className="font-[Sora] font-semibold text-sm tracking-wide text-gray-700 uppercase hidden sm:inline">
+                Client Portal
+              </span>
             </div>
-            <span className="font-[Sora] font-semibold text-sm tracking-wide text-gray-700 uppercase">
-              Client Portal
-            </span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-600 hover:text-gray-900">
+              <LogOut className="w-4 h-4 mr-1.5" />
+              Log out
+            </Button>
           </div>
         </div>
       </header>
@@ -161,6 +388,7 @@ export default function ClientPortal() {
             <LeadsContent profileJob={profileJob} profileRole={profileRole} />
           )}
           {activeSection === "integrations" && <IntegrationsContent />}
+          {activeSection === "marketing" && <MarketingCampaignsContent />}
           {activeSection === "payment" && <PaymentContent />}
           {activeSection === "membership" && <MembershipContent />}
         </main>
@@ -252,6 +480,7 @@ function WorkflowConfig({
   workflow: (typeof workflowTemplates)[number] | undefined;
   onBack: () => void;
 }) {
+  const storageKey = STORAGE_KEYS.workflow(workflow?.id ?? "default");
   const [enabled, setEnabled] = useState(true);
   const [runType, setRunType] = useState<"schedule" | "lead">("lead");
   const [scheduleInterval, setScheduleInterval] = useState<string | number>(60);
@@ -259,6 +488,44 @@ function WorkflowConfig({
   const [scheduleDays, setScheduleDays] = useState<string>("1,2,3,4,5");
   const [leadDelayValue, setLeadDelayValue] = useState(3);
   const [leadDelayUnit, setLeadDelayUnit] = useState<"minutes" | "hours" | "days">("days");
+  const [triggerConditions, setTriggerConditions] = useState("");
+  const [actions, setActions] = useState("");
+  const [savedFeedback, setSavedFeedback] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.enabled !== undefined) setEnabled(parsed.enabled);
+        if (parsed.runType) setRunType(parsed.runType);
+        if (parsed.scheduleInterval !== undefined) setScheduleInterval(parsed.scheduleInterval);
+        if (parsed.scheduleTime) setScheduleTime(parsed.scheduleTime);
+        if (parsed.scheduleDays) setScheduleDays(parsed.scheduleDays);
+        if (parsed.leadDelayValue !== undefined) setLeadDelayValue(parsed.leadDelayValue);
+        if (parsed.leadDelayUnit) setLeadDelayUnit(parsed.leadDelayUnit);
+        if (parsed.triggerConditions) setTriggerConditions(parsed.triggerConditions);
+        if (parsed.actions) setActions(parsed.actions);
+      }
+    } catch {}
+  }, [storageKey]);
+
+  const handleSaveConfig = () => {
+    const data = {
+      enabled,
+      runType,
+      scheduleInterval,
+      scheduleTime,
+      scheduleDays,
+      leadDelayValue,
+      leadDelayUnit,
+      triggerConditions,
+      actions,
+    };
+    localStorage.setItem(storageKey, JSON.stringify(data));
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2000);
+  };
 
   const dayLabels: Record<string, string> = {
     "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat",
@@ -423,6 +690,8 @@ function WorkflowConfig({
             <input
               type="text"
               placeholder="e.g. Lead status is new, Source is website..."
+              value={triggerConditions}
+              onChange={(e) => setTriggerConditions(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
             />
           </div>
@@ -431,8 +700,26 @@ function WorkflowConfig({
             <input
               type="text"
               placeholder="Configure actions..."
+              value={actions}
+              onChange={(e) => setActions(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
             />
+          </div>
+          <div className="flex items-center gap-3 pt-6 mt-6 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={handleSaveConfig}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              Save configuration
+            </button>
+            {savedFeedback && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                <CheckCircle2 className="w-4 h-4" />
+                Saved
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -1212,9 +1499,44 @@ function ProfileContent({
   role: string;
   setRole: (v: string) => void;
 }) {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [addedProfiles, setAddedProfiles] = useState<AddedProfile[]>([]);
   const [selectedPlatform, setSelectedPlatform] = useState<SocialId>("facebook");
   const [urlInput, setUrlInput] = useState("");
+  const [savedFeedback, setSavedFeedback] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.profile);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.fullName) setFullName(parsed.fullName);
+        if (parsed.email) setEmail(parsed.email);
+        if (parsed.phone) setPhone(parsed.phone);
+        if (parsed.industry) setIndustry(parsed.industry);
+        if (parsed.job) setJob(parsed.job);
+        if (parsed.role) setRole(parsed.role);
+        if (Array.isArray(parsed.socialProfiles)) setAddedProfiles(parsed.socialProfiles);
+      }
+    } catch {}
+  }, [setIndustry, setJob, setRole]);
+
+  const handleSaveProfile = () => {
+    const data = {
+      fullName,
+      email,
+      phone,
+      industry,
+      job,
+      role,
+      socialProfiles: addedProfiles,
+    };
+    localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(data));
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2000);
+  };
 
   const addProfile = () => {
     const url = urlInput.trim();
@@ -1252,6 +1574,8 @@ function ProfileContent({
             <input
               type="text"
               placeholder="Your name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
             />
           </div>
@@ -1260,6 +1584,8 @@ function ProfileContent({
             <input
               type="email"
               placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
             />
           </div>
@@ -1268,6 +1594,8 @@ function ProfileContent({
             <input
               type="tel"
               placeholder="+1 (555) 000-0000"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
             />
           </div>
@@ -1407,6 +1735,23 @@ function ProfileContent({
             )}
           </div>
         </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleSaveProfile}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            Save profile
+          </button>
+          {savedFeedback && (
+            <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+              <CheckCircle2 className="w-4 h-4" />
+              Saved
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1452,7 +1797,16 @@ function dateToYYYYMMDD(d: Date): string {
 }
 
 function BookingsContent() {
-  const [blocks, setBlocks] = useState<TimeSlotBlock[]>([]);
+  const [blocks, setBlocks] = useState<TimeSlotBlock[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.bookings);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch {}
+    return [];
+  });
   const [view, setView] = useState<"list" | "calendar">("list");
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
   const [form, setForm] = useState({
@@ -1460,6 +1814,13 @@ function BookingsContent() {
     startTime: "09:00",
     endTime: "17:00",
   });
+  const [savedFeedback, setSavedFeedback] = useState(false);
+
+  const handleSaveAvailability = () => {
+    localStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(blocks));
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2000);
+  };
 
   const addBlock = () => {
     if (!form.date || !form.startTime || !form.endTime) return;
@@ -1567,8 +1928,25 @@ function BookingsContent() {
 
         {/* View toggle & slots section */}
         <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 className="font-semibold text-gray-900">Your time slots</h3>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveAvailability}
+                disabled={blocks.length === 0}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Save availability
+              </button>
+              {savedFeedback && (
+                <span className="flex items-center gap-1 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
             <div className="flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
               <button
                 type="button"
@@ -1724,26 +2102,686 @@ function BookingsContent() {
   );
 }
 
-const INTEGRATION_OPTIONS = [
-  { id: "google-calendar", label: "Google Calendar", desc: "Sync bookings and availability", iconSlug: "googlecalendar" },
-  { id: "calendly", label: "Calendly", desc: "Appointment scheduling", iconSlug: "calendly" },
-  { id: "pipedrive", label: "Pipedrive", desc: "CRM and pipeline management", iconSlug: "pipedrive" },
-  { id: "hubspot", label: "HubSpot", desc: "CRM, marketing, and sales", iconSlug: "hubspot" },
-  { id: "salesforce", label: "Salesforce", desc: "CRM and customer data", iconSlug: "salesforce" },
-  { id: "outlook-calendar", label: "Outlook Calendar", desc: "Microsoft 365 calendar sync", iconSlug: "microsoftoutlook" },
-  { id: "zoom", label: "Zoom", desc: "Meetings and webinars", iconSlug: "zoom" },
-  { id: "zapier", label: "Zapier", desc: "Connect 6,000+ apps", iconSlug: "zapier" },
-  { id: "stripe", label: "Stripe", desc: "Payments and subscriptions", iconSlug: "stripe" },
-  { id: "slack", label: "Slack", desc: "Notifications and alerts", iconSlug: "slack" },
+/* ===== MARKETING CAMPAIGNS ===== */
+const MARKETING_PLATFORMS = [
+  { id: "meta", label: "Meta (Facebook & Instagram)", desc: "Ads and organic posts across Meta", icon: Share2, color: "text-blue-600" },
+  { id: "linkedin", label: "LinkedIn", desc: "B2B ads and organic content", icon: Users, color: "text-blue-700" },
+  { id: "twitter", label: "X (Twitter)", desc: "Tweets and promoted posts", icon: Share2, color: "text-gray-900" },
+  { id: "google-ads", label: "Google Ads", desc: "Search and display advertising", icon: Target, color: "text-emerald-600" },
 ] as const;
 
-type IntegrationId = (typeof INTEGRATION_OPTIONS)[number]["id"];
+type MarketingPlatformId = (typeof MARKETING_PLATFORMS)[number]["id"];
 
-type AddedIntegration = { id: string; integrationId: IntegrationId; connectedAt: string };
+type CampaignConfig = {
+  frequency?: string;
+  frequencyValue?: number;
+  scheduleType?: "continuous" | "scheduled";
+  runDays?: string[];
+  runTimeStart?: string;
+  runTimeEnd?: string;
+  timezone?: string;
+  objective?: string;
+  budgetType?: "daily" | "lifetime";
+  budgetAmount?: string;
+  aiGenerateCaptions?: boolean;
+  aiOptimizeTiming?: boolean;
+  aiAbTest?: boolean;
+  // Platform-specific
+  metaPlacements?: string[];
+  linkedinTargeting?: string;
+  twitterPostType?: string;
+  googleCampaignType?: string;
+};
+
+type MarketingCampaign = {
+  id: string;
+  platformId: MarketingPlatformId;
+  name: string;
+  config: CampaignConfig;
+  createdAt: string;
+};
+
+const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const FREQUENCY_OPTIONS = ["1x/day", "2x/day", "3x/day", "1x/week", "2x/week", "3x/week", "5x/week", "Custom"];
+const OBJECTIVE_OPTIONS = ["Awareness", "Engagement", "Leads", "Conversions", "Traffic"];
+const META_PLACEMENTS = ["Feed", "Stories", "Reels", "Explore", "Messenger"];
+const GOOGLE_TYPES = ["Search", "Display", "Performance Max", "YouTube"];
+
+function MarketingCampaignsContent() {
+  const [campaigns, setCampaigns] = useState<MarketingCampaign[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.campaigns);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch {}
+    return [];
+  });
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [savedFeedback, setSavedFeedback] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<MarketingPlatformId | "">("");
+  const [newCampaignName, setNewCampaignName] = useState("");
+  const [newCampaignConfig, setNewCampaignConfig] = useState<CampaignConfig>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const platform = MARKETING_PLATFORMS.find((p) => p.id === selectedPlatform);
+
+  const addCampaign = () => {
+    if (!selectedPlatform || !newCampaignName.trim()) return;
+    setCampaigns((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        platformId: selectedPlatform,
+        name: newCampaignName.trim(),
+        config: { ...newCampaignConfig },
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    setSelectedPlatform("");
+    setNewCampaignName("");
+    setNewCampaignConfig({});
+    setShowAddForm(false);
+  };
+
+  const updateCampaign = (id: string, updates: Partial<MarketingCampaign>) => {
+    setCampaigns((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+  };
+
+  const removeCampaign = (id: string) => {
+    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    setEditingId(null);
+  };
+
+  const toggleDay = (day: string) => {
+    const current = newCampaignConfig.runDays ?? [];
+    setNewCampaignConfig((prev) => ({
+      ...prev,
+      runDays: current.includes(day) ? current.filter((d) => d !== day) : [...current, day],
+    }));
+  };
+
+  const handleSaveCampaigns = () => {
+    localStorage.setItem(STORAGE_KEYS.campaigns, JSON.stringify(campaigns));
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2000);
+  };
+
+  return (
+    <div>
+      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Marketing Campaigns</h1>
+      <p className="text-gray-600 mb-8">
+        Create and manage AI-powered social media and ad campaigns. Configure frequency, schedule, budgets, and automation for each platform.
+      </p>
+
+      <div className="max-w-3xl space-y-6">
+        {!showAddForm ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
+            <button
+              type="button"
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Add campaign
+            </button>
+            <p className="mt-3 text-xs text-gray-500">
+              Choose a platform, set your schedule and budget, and let AI optimize your campaign.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-sv-blue" />
+              New marketing campaign
+            </h3>
+
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Platform</Label>
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {MARKETING_PLATFORMS.map((p) => {
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPlatform(p.id)}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        selectedPlatform === p.id
+                          ? "border-sv-blue bg-sv-blue/5"
+                          : "border-gray-200 hover:border-gray-300 bg-white"
+                      }`}
+                    >
+                      <Icon className={`w-6 h-6 ${selectedPlatform === p.id ? "text-sv-blue" : "text-gray-400"}`} />
+                      <span className="text-xs font-medium text-gray-900 text-center">{p.label.split(" ")[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {selectedPlatform && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Campaign name</Label>
+                  <Input
+                    value={newCampaignName}
+                    onChange={(e) => setNewCampaignName(e.target.value)}
+                    placeholder="e.g., Q1 Lead Gen - Meta"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Posting frequency</Label>
+                    <Select
+                      value={newCampaignConfig.frequency ?? ""}
+                      onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, frequency: v }))}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FREQUENCY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Schedule type</Label>
+                    <Select
+                      value={newCampaignConfig.scheduleType ?? "continuous"}
+                      onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, scheduleType: v as "continuous" | "scheduled" }))}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="continuous">Run continuously</SelectItem>
+                        <SelectItem value="scheduled">Specific days & times</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {newCampaignConfig.scheduleType === "scheduled" && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">Run on days</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {DAYS_OF_WEEK.map((day) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(day)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            (newCampaignConfig.runDays ?? []).includes(day)
+                              ? "bg-sv-blue text-white"
+                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-gray-500">Start time</Label>
+                        <Input
+                          type="time"
+                          value={newCampaignConfig.runTimeStart ?? "09:00"}
+                          onChange={(e) => setNewCampaignConfig((prev) => ({ ...prev, runTimeStart: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">End time</Label>
+                        <Input
+                          type="time"
+                          value={newCampaignConfig.runTimeEnd ?? "17:00"}
+                          onChange={(e) => setNewCampaignConfig((prev) => ({ ...prev, runTimeEnd: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Timezone</Label>
+                  <Select
+                    value={newCampaignConfig.timezone ?? "America/New_York"}
+                    onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, timezone: v }))}
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="America/New_York">Eastern (EST)</SelectItem>
+                      <SelectItem value="America/Chicago">Central (CST)</SelectItem>
+                      <SelectItem value="America/Denver">Mountain (MST)</SelectItem>
+                      <SelectItem value="America/Los_Angeles">Pacific (PST)</SelectItem>
+                      <SelectItem value="UTC">UTC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Campaign objective</Label>
+                    <Select
+                      value={newCampaignConfig.objective ?? ""}
+                      onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, objective: v }))}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select objective" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OBJECTIVE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Budget type</Label>
+                    <Select
+                      value={newCampaignConfig.budgetType ?? "daily"}
+                      onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, budgetType: v as "daily" | "lifetime" }))}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily budget</SelectItem>
+                        <SelectItem value="lifetime">Lifetime budget</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Budget amount ($)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g., 50"
+                    value={newCampaignConfig.budgetAmount ?? ""}
+                    onChange={(e) => setNewCampaignConfig((prev) => ({ ...prev, budgetAmount: e.target.value }))}
+                    className="mt-2 max-w-[200px]"
+                  />
+                </div>
+
+                <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    AI automation options
+                  </h4>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={newCampaignConfig.aiGenerateCaptions ?? false}
+                        onCheckedChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, aiGenerateCaptions: !!v }))}
+                      />
+                      <span className="text-sm">AI-generated captions</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={newCampaignConfig.aiOptimizeTiming ?? false}
+                        onCheckedChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, aiOptimizeTiming: !!v }))}
+                      />
+                      <span className="text-sm">AI-optimized posting times</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={newCampaignConfig.aiAbTest ?? false}
+                        onCheckedChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, aiAbTest: !!v }))}
+                      />
+                      <span className="text-sm">AI A/B test creatives</span>
+                    </label>
+                  </div>
+                </div>
+
+                {selectedPlatform === "meta" && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Placements</Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {META_PLACEMENTS.map((pl) => {
+                        const selected = (newCampaignConfig.metaPlacements ?? []).includes(pl);
+                        return (
+                          <button
+                            key={pl}
+                            type="button"
+                            onClick={() =>
+                              setNewCampaignConfig((prev) => ({
+                                ...prev,
+                                metaPlacements: selected
+                                  ? (prev.metaPlacements ?? []).filter((x) => x !== pl)
+                                  : [...(prev.metaPlacements ?? []), pl],
+                              }))
+                            }
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                              selected ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >
+                            {pl}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedPlatform === "linkedin" && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Targeting focus</Label>
+                    <Select
+                      value={newCampaignConfig.linkedinTargeting ?? ""}
+                      onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, linkedinTargeting: v }))}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select targeting" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="job-titles">Job titles & seniority</SelectItem>
+                        <SelectItem value="industries">Industries</SelectItem>
+                        <SelectItem value="company-size">Company size</SelectItem>
+                        <SelectItem value="all">Auto-targeting (AI)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {selectedPlatform === "google-ads" && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Campaign type</Label>
+                    <Select
+                      value={newCampaignConfig.googleCampaignType ?? ""}
+                      onValueChange={(v) => setNewCampaignConfig((prev) => ({ ...prev, googleCampaignType: v }))}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GOOGLE_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={addCampaign}
+                    disabled={!newCampaignName.trim()}
+                    className="px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Create campaign
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setSelectedPlatform("");
+                      setNewCampaignName("");
+                      setNewCampaignConfig({});
+                    }}
+                    className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Target className="w-5 h-5 text-gray-500" />
+              Your campaigns
+            </h3>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSaveCampaigns}
+                disabled={campaigns.length === 0}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Save
+              </button>
+              {savedFeedback && (
+                <span className="flex items-center gap-1 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
+          </div>
+          {campaigns.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 rounded-lg bg-gray-50 border border-dashed border-gray-200">
+              <Megaphone className="w-12 h-12 text-gray-300 mb-3" />
+              <p className="text-sm text-gray-500">No campaigns yet</p>
+              <p className="text-xs text-gray-400 mt-1">Add a campaign above to get started</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {campaigns.map((campaign) => {
+                const plat = MARKETING_PLATFORMS.find((p) => p.id === campaign.platformId);
+                const Icon = plat?.icon ?? Megaphone;
+                const isEditing = editingId === campaign.id;
+                return (
+                  <li key={campaign.id}>
+                    <Collapsible open={isEditing} onOpenChange={(open) => setEditingId(open ? campaign.id : null)}>
+                      <div className="rounded-lg border border-gray-200 overflow-hidden">
+                        <CollapsibleTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-sv-blue/10 flex items-center justify-center shrink-0">
+                                <Icon className="w-5 h-5 text-sv-blue" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{campaign.name}</p>
+                                <p className="text-xs text-gray-500">{plat?.label ?? campaign.platformId}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  {campaign.config.frequency ?? "—"} · {campaign.config.objective ?? "—"} · {campaign.config.budgetAmount ? `$${campaign.config.budgetAmount}/${campaign.config.budgetType ?? "day"}` : "No budget"}
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="border-t border-gray-200 bg-gray-50/50 p-4 space-y-3 text-sm">
+                            <div className="grid sm:grid-cols-2 gap-2">
+                              <p><span className="text-gray-500">Frequency:</span> {campaign.config.frequency ?? "—"}</p>
+                              <p><span className="text-gray-500">Schedule:</span> {campaign.config.scheduleType === "scheduled" ? (campaign.config.runDays ?? []).join(", ") || "—" : "Continuous"}</p>
+                              <p><span className="text-gray-500">Objective:</span> {campaign.config.objective ?? "—"}</p>
+                              <p><span className="text-gray-500">Budget:</span> {campaign.config.budgetAmount ? `$${campaign.config.budgetAmount} (${campaign.config.budgetType})` : "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                              {campaign.config.aiGenerateCaptions && <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800">AI captions</span>}
+                              {campaign.config.aiOptimizeTiming && <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800">AI timing</span>}
+                              {campaign.config.aiAbTest && <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800">A/B test</span>}
+                            </div>
+                            <div className="flex justify-end pt-2">
+                              <button
+                                type="button"
+                                onClick={() => removeCampaign(campaign.id)}
+                                className="text-sm text-red-600 hover:text-red-700 font-medium"
+                              >
+                                Delete campaign
+                              </button>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const INTEGRATION_OPTIONS = [
+  { id: "google-calendar", label: "Google Calendar", desc: "Sync bookings and availability", iconSlug: "googlecalendar", category: "calendar" as const },
+  { id: "calendly", label: "Calendly", desc: "Appointment scheduling", iconSlug: "calendly", category: "calendar" as const },
+  { id: "pipedrive", label: "Pipedrive", desc: "CRM and pipeline management", iconSlug: "pipedrive", category: "crm" as const },
+  { id: "hubspot", label: "HubSpot", desc: "CRM, marketing, and sales", iconSlug: "hubspot", category: "crm" as const },
+  { id: "salesforce", label: "Salesforce", desc: "CRM and customer data", iconSlug: "salesforce", category: "crm" as const },
+  { id: "outlook-calendar", label: "Outlook Calendar", desc: "Microsoft 365 calendar sync", iconSlug: "microsoftoutlook", category: "calendar" as const },
+  { id: "zoom", label: "Zoom", desc: "Meetings and webinars", iconSlug: "zoom", category: "meetings" as const },
+  { id: "zapier", label: "Zapier", desc: "Connect 6,000+ apps", iconSlug: "zapier", category: "automation" as const },
+  { id: "stripe", label: "Stripe", desc: "Payments and subscriptions", iconSlug: "stripe", category: "payments" as const },
+  { id: "slack", label: "Slack", desc: "Notifications and alerts", iconSlug: "slack", category: "communication" as const },
+] as const;
+
+/** Assignable actions per integration category. Based on typical API capabilities of CRM, calendar, comms, etc. */
+const INTEGRATION_ACTIONS: Record<string, { id: string; label: string; desc: string }[]> = {
+  crm: [
+    { id: "sync-leads", label: "Sync new leads to CRM", desc: "Push web form and inbound leads into contacts" },
+    { id: "update-contact", label: "Update contact on qualification", desc: "Update lead/contact when AI scores or qualifies" },
+    { id: "create-deal", label: "Create deal on qualification", desc: "Auto-create opportunity when lead reaches threshold" },
+    { id: "update-deal-stage", label: "Update deal stage", desc: "Move deals between pipeline stages from triggers" },
+    { id: "log-activities", label: "Log activities (calls, meetings)", desc: "Record calls, meetings, and tasks to CRM" },
+    { id: "sync-notes", label: "Sync notes and comments", desc: "Keep notes in sync across systems" },
+    { id: "create-tasks", label: "Create tasks from workflows", desc: "Auto-create follow-up tasks for reps" },
+  ],
+  calendar: [
+    { id: "sync-availability", label: "Sync availability for bookings", desc: "Block time and show real-time availability" },
+    { id: "create-events", label: "Create events on booking", desc: "Add calendar events when appointments are booked" },
+    { id: "booking-confirmation", label: "Send booking confirmation", desc: "Email confirmation and add-to-calendar" },
+    { id: "sync-to-crm", label: "Sync meetings to CRM", desc: "Log scheduled meetings as CRM activities" },
+    { id: "remind-before", label: "Send reminder before meeting", desc: "Email or SMS reminder (e.g., 15 min before)" },
+  ],
+  meetings: [
+    { id: "create-meeting-link", label: "Create meeting link for bookings", desc: "Generate Zoom link when booking is made" },
+    { id: "join-link-email", label: "Include join link in confirmation", desc: "Add video link to booking confirmations" },
+    { id: "record-meetings", label: "Record meetings (if enabled)", desc: "Store recordings for later review" },
+  ],
+  communication: [
+    { id: "notify-new-lead", label: "Notify on new lead", desc: "Post to Slack channel when lead comes in" },
+    { id: "notify-deal-stage", label: "Notify on deal stage change", desc: "Alert when deal moves to next stage" },
+    { id: "notify-booking", label: "Notify on new booking", desc: "DM or channel post for new appointments" },
+    { id: "daily-digest", label: "Daily activity digest", desc: "Summary of leads, deals, bookings" },
+  ],
+  automation: [
+    { id: "trigger-new-lead", label: "Trigger workflow on new lead", desc: "Fire webhook when new lead is captured" },
+    { id: "trigger-booking", label: "Trigger on booking created", desc: "Webhook when appointment is booked" },
+    { id: "trigger-deal-stage", label: "Trigger on deal stage change", desc: "Webhook when pipeline stage changes" },
+    { id: "trigger-qualified", label: "Trigger when lead qualified", desc: "Webhook when lead meets qualification score" },
+    { id: "send-to-zap", label: "Send data to Zapier", desc: "Push payload to your Zap for custom automation" },
+  ],
+  payments: [
+    { id: "process-subscription", label: "Process subscription payments", desc: "Charge membership or plan fees" },
+    { id: "charge-credits", label: "Charge for credit packs", desc: "One-time charges for add-on credits" },
+    { id: "generate-invoice", label: "Generate invoices", desc: "Create and send invoices" },
+    { id: "refund-handling", label: "Handle refunds", desc: "Process refunds when requested" },
+  ],
+};
+
+/** OAuth scopes/permissions each integration requests. Used for auth flow and permission display. */
+const INTEGRATION_PERMISSIONS: Record<string, { scope: string; label: string; type: "read" | "write" }[]> = {
+  "google-calendar": [
+    { scope: "calendar.readonly", label: "Read calendar events", type: "read" },
+    { scope: "calendar.events", label: "Create and edit events", type: "write" },
+    { scope: "calendar.freebusy", label: "View availability", type: "read" },
+  ],
+  calendly: [
+    { scope: "event_types:read", label: "Read event types", type: "read" },
+    { scope: "invitees:read", label: "Read bookings", type: "read" },
+    { scope: "invitees:write", label: "Create bookings", type: "write" },
+  ],
+  pipedrive: [
+    { scope: "deals:read", label: "Read deals and pipeline", type: "read" },
+    { scope: "deals:write", label: "Create and update deals", type: "write" },
+    { scope: "persons:read", label: "Read contacts", type: "read" },
+    { scope: "persons:write", label: "Create and update contacts", type: "write" },
+    { scope: "activities:read", label: "Read activities", type: "read" },
+    { scope: "activities:write", label: "Log activities", type: "write" },
+  ],
+  hubspot: [
+    { scope: "crm.objects.contacts.read", label: "Read contacts", type: "read" },
+    { scope: "crm.objects.contacts.write", label: "Create and update contacts", type: "write" },
+    { scope: "crm.objects.deals.read", label: "Read deals", type: "read" },
+    { scope: "crm.objects.deals.write", label: "Create and update deals", type: "write" },
+    { scope: "crm.objects.companies.read", label: "Read companies", type: "read" },
+  ],
+  salesforce: [
+    { scope: "api", label: "Access Salesforce data", type: "read" },
+    { scope: "refresh_token", label: "Maintain session", type: "read" },
+    { scope: "full", label: "Read and write records", type: "write" },
+  ],
+  "outlook-calendar": [
+    { scope: "Calendars.Read", label: "Read calendar", type: "read" },
+    { scope: "Calendars.ReadWrite", label: "Create and edit events", type: "write" },
+  ],
+  zoom: [
+    { scope: "meeting:read", label: "Read meetings", type: "read" },
+    { scope: "meeting:write", label: "Create meetings", type: "write" },
+  ],
+  zapier: [
+    { scope: "webhook:receive", label: "Receive webhook triggers", type: "read" },
+    { scope: "webhook:send", label: "Send data to Zaps", type: "write" },
+  ],
+  stripe: [
+    { scope: "read_only", label: "Read payment data", type: "read" },
+    { scope: "charges:write", label: "Process charges", type: "write" },
+    { scope: "customers:write", label: "Manage customers", type: "write" },
+  ],
+  slack: [
+    { scope: "channels:read", label: "Read channel list", type: "read" },
+    { scope: "chat:write", label: "Send messages", type: "write" },
+    { scope: "users:read", label: "Read user info", type: "read" },
+  ],
+};
+
+type IntegrationId = (typeof INTEGRATION_OPTIONS)[number]["id"];
+type IntegrationCategory = (typeof INTEGRATION_OPTIONS)[number]["category"];
+
+type AddedIntegration = {
+  id: string;
+  integrationId: IntegrationId;
+  connectedAt: string;
+  assignedActions: string[];
+  connectionStatus: "pending_auth" | "connected";
+  connectedAccount?: string; // email or account name after auth
+};
 
 function IntegrationsContent() {
-  const [addedIntegrations, setAddedIntegrations] = useState<AddedIntegration[]>([]);
+  const [addedIntegrations, setAddedIntegrations] = useState<AddedIntegration[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.integrations);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch {}
+    return [];
+  });
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationId | "">("");
+  const [authDialogItem, setAuthDialogItem] = useState<AddedIntegration | null>(null);
+  const [savedFeedback, setSavedFeedback] = useState(false);
+
+  const handleSaveIntegrations = () => {
+    localStorage.setItem(STORAGE_KEYS.integrations, JSON.stringify(addedIntegrations));
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2000);
+  };
 
   const addIntegration = () => {
     if (!selectedIntegration) return;
@@ -1754,9 +2792,34 @@ function IntegrationsContent() {
         id: crypto.randomUUID(),
         integrationId: selectedIntegration,
         connectedAt: new Date().toISOString(),
+        assignedActions: [],
+        connectionStatus: "pending_auth" as const,
       },
     ]);
     setSelectedIntegration("");
+  };
+
+  const setConnectionStatus = (itemId: string, status: "pending_auth" | "connected", account?: string) => {
+    setAddedIntegrations((prev) =>
+      prev.map((i) =>
+        i.id === itemId ? { ...i, connectionStatus: status, connectedAccount: account } : i
+      )
+    );
+  };
+
+  const toggleAction = (itemId: string, actionId: string) => {
+    setAddedIntegrations((prev) =>
+      prev.map((i) =>
+        i.id === itemId
+          ? {
+              ...i,
+              assignedActions: i.assignedActions.includes(actionId)
+                ? i.assignedActions.filter((a) => a !== actionId)
+                : [...i.assignedActions, actionId],
+            }
+          : i
+      )
+    );
   };
 
   const removeIntegration = (id: string) => {
@@ -1816,48 +2879,196 @@ function IntegrationsContent() {
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Plug2 className="w-5 h-5 text-gray-500" />
-            Connected integrations
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Plug2 className="w-5 h-5 text-gray-500" />
+              Connected integrations
+            </h3>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSaveIntegrations}
+                disabled={addedIntegrations.length === 0}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Save
+              </button>
+              {savedFeedback && (
+                <span className="flex items-center gap-1 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
+          </div>
           {addedIntegrations.length === 0 ? (
             <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
               <Plug2 className="w-5 h-5 text-gray-400" />
               <span className="text-sm text-gray-500">No integrations connected yet. Add one above.</span>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {addedIntegrations.map((item) => {
                 const opt = INTEGRATION_OPTIONS.find((o) => o.id === item.integrationId);
+                const category = opt?.category ?? "crm";
+                const actions = INTEGRATION_ACTIONS[category] ?? [];
+                const assignedSet = new Set(item.assignedActions ?? []);
+
+                const toggleAction = (actionId: string) => {
+                  setAddedIntegrations((prev) =>
+                    prev.map((i) =>
+                      i.id === item.id
+                        ? {
+                            ...i,
+                            assignedActions: assignedSet.has(actionId)
+                              ? (i.assignedActions ?? []).filter((a) => a !== actionId)
+                              : [...(i.assignedActions ?? []), actionId],
+                          }
+                        : i
+                    )
+                  );
+                };
+
                 return (
-                  <li
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0">
-                        <Plug2 className="w-5 h-5 text-sv-blue" />
+                  <li key={item.id}>
+                    <Collapsible>
+                      <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                        <CollapsibleTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-sv-blue/10 border border-sv-blue/20 flex items-center justify-center shrink-0">
+                                <Plug2 className="w-5 h-5 text-sv-blue" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-900">{opt?.label ?? item.integrationId}</p>
+                                <p className="text-xs text-gray-500 truncate">{opt?.desc ?? ""}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  Added {new Date(item.connectedAt).toLocaleDateString()}
+                                  {(item.assignedActions ?? []).length > 0 && (
+                                    <span className="ml-2 text-sv-blue font-medium">
+                                      · {(item.assignedActions ?? []).length} action(s) assigned
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {item.connectionStatus === "connected" ? (
+                                <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-medium">
+                                  Connected
+                                </span>
+                              ) : (
+                                <span className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-700 font-medium">
+                                  Needs auth
+                                </span>
+                              )}
+                              <ChevronDown className="w-4 h-4 text-gray-400 transition-transform [[data-state=open]_&]:rotate-180" />
+                            </div>
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="border-t border-gray-200 bg-gray-50/80 p-4 space-y-4">
+                            {/* Authentication section */}
+                            <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+                              <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                <Lock className="w-4 h-4 text-gray-500" />
+                                Authentication & permissions
+                              </h4>
+                              {item.connectionStatus === "connected" ? (
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    Connected as <span className="font-medium text-gray-900">{item.connectedAccount ?? "your account"}</span>
+                                  </p>
+                                  <p className="text-xs text-gray-500 mb-2">Granted permissions:</p>
+                                  <ul className="space-y-1">
+                                    {(INTEGRATION_PERMISSIONS[item.integrationId] ?? []).map((perm) => (
+                                      <li key={perm.scope} className="text-xs flex items-center gap-2">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${perm.type === "read" ? "bg-blue-500" : "bg-emerald-500"}`} />
+                                        {perm.label} <span className="text-gray-400">({perm.type})</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <button
+                                    type="button"
+                                    onClick={() => setAuthDialogItem(item)}
+                                    className="mt-2 text-xs text-sv-blue hover:text-sv-blue-light font-medium"
+                                  >
+                                    Reconnect or change account
+                                  </button>
+                                </div>
+                              ) : (
+                                <div>
+                                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                                    Sign in and grant permissions to sync data with this integration.
+                                  </p>
+                                  <p className="text-xs text-gray-500 mb-2">This integration will request:</p>
+                                  <ul className="space-y-1 mb-4">
+                                    {(INTEGRATION_PERMISSIONS[item.integrationId] ?? []).map((perm) => (
+                                      <li key={perm.scope} className="text-xs flex items-center gap-2">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${perm.type === "read" ? "bg-blue-500" : "bg-emerald-500"}`} />
+                                        {perm.label} <span className="text-gray-400">({perm.type})</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <button
+                                    type="button"
+                                    onClick={() => setAuthDialogItem(item)}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-colors"
+                                  >
+                                    <LogIn className="w-4 h-4" />
+                                    Connect & authorize
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900 mb-2">Assign actions</h4>
+                              <p className="text-xs text-gray-500 mb-3">
+                                Choose which actions this integration will handle. Check the boxes below to enable each capability.
+                              </p>
+                              {actions.length === 0 ? (
+                                <p className="text-xs text-gray-500 italic">No assignable actions for this integration type.</p>
+                              ) : (
+                                <div className="grid sm:grid-cols-2 gap-2">
+                                  {actions.map((action) => (
+                                    <label
+                                      key={action.id}
+                                      className="flex items-start gap-3 p-3 rounded-lg bg-white border border-gray-200 hover:border-sv-blue/30 cursor-pointer transition-colors"
+                                    >
+                                      <Checkbox
+                                        checked={assignedSet.has(action.id)}
+                                        onCheckedChange={() => toggleAction(action.id)}
+                                      />
+                                      <div className="min-w-0">
+                                        <span className="text-sm font-medium text-gray-900">{action.label}</span>
+                                        <p className="text-xs text-gray-500 mt-0.5">{action.desc}</p>
+                                      </div>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex justify-end">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeIntegration(item.id);
+                                }}
+                                className="text-sm text-red-600 hover:text-red-700 font-medium"
+                              >
+                                Disconnect
+                              </button>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{opt?.label ?? item.integrationId}</p>
-                        <p className="text-xs text-gray-500 truncate">{opt?.desc ?? ""}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Added {new Date(item.connectedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-medium">
-                        Connected
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeIntegration(item.id)}
-                        className="text-sm text-red-600 hover:text-red-700 font-medium"
-                      >
-                        Disconnect
-                      </button>
-                    </div>
+                    </Collapsible>
                   </li>
                 );
               })}
@@ -1865,6 +3076,59 @@ function IntegrationsContent() {
           )}
         </div>
       </div>
+
+      {/* Auth / OAuth connection dialog */}
+      <Dialog open={!!authDialogItem} onOpenChange={(open) => !open && setAuthDialogItem(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Connect to {authDialogItem && INTEGRATION_OPTIONS.find((o) => o.id === authDialogItem.integrationId)?.label}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              You'll be redirected to sign in with your account and grant permissions. This allows us to read and write data as needed for your workflows.
+            </p>
+            {authDialogItem && (
+              <>
+                <div>
+                  <p className="text-xs font-medium text-gray-700 mb-2">Permissions requested:</p>
+                  <ul className="space-y-1">
+                    {(INTEGRATION_PERMISSIONS[authDialogItem.integrationId] ?? []).map((perm) => (
+                      <li key={perm.scope} className="text-xs flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${perm.type === "read" ? "bg-blue-500" : "bg-emerald-500"}`} />
+                        {perm.label} <span className="text-gray-400">({perm.type})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-xs text-gray-500">
+                  In production, clicking Authorize would redirect you to the provider's sign-in page. After you approve, we'd receive an access token to sync your data.
+                </p>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setAuthDialogItem(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (authDialogItem) {
+                  setConnectionStatus(authDialogItem.id, "connected", "your-account@example.com");
+                  setAuthDialogItem(null);
+                }
+              }}
+              className="px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg"
+            >
+              Authorize (simulate)
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
