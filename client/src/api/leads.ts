@@ -20,6 +20,14 @@ export type Lead = {
   referralSource?: string;
   referralPaymentMade?: boolean;
   referralPaymentAmount?: number;
+  /** ISO date string when lead was first captured */
+  initialCaptureDate?: string;
+  /** ISO date string for next follow-up */
+  nextFollowUpDate?: string;
+  /** Current workflow step label */
+  currentStep?: string;
+  /** Next workflow step label */
+  nextStep?: string;
 };
 
 /** GET /leads */

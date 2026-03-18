@@ -48,6 +48,7 @@ import {
   LogOut,
   CheckCircle2,
   Save,
+  Play,
 } from "lucide-react";
 import {
   Dialog,
@@ -70,6 +71,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { login, logout, getCurrentUser, loginWithProvider } from "@/api/auth";
+import { runWorkflow } from "@/api/workflows";
+import {
+  SYSTEM_LEAD_FIELDS,
+  DEFAULT_LEAD_FIELDS_CONFIG,
+  DATE_FIELD_DB_NAMES,
+  getSystemField,
+  suggestMappingForHeader,
+  loadLeadFieldsConfig,
+  saveLeadFieldsConfig,
+  getVisibleFieldsFromConfig,
+  getDisplayName,
+  addFieldToConfig,
+  updateFieldInConfig,
+  removeFieldFromConfig,
+  type LeadFieldsConfig,
+  type LeadFieldConfigItem,
+} from "@/config/leadFields";
 
 type SectionId = "workflows" | "profile" | "bookings" | "leads" | "integrations" | "marketing" | "payment" | "membership";
 
@@ -86,6 +104,7 @@ const sidebarSections: { id: SectionId; label: string; icon: typeof Workflow }[]
 
 const workflowTemplates = [
   { id: "lead-capture", name: "Lead Capture & Qualification", desc: "Gathers web form data, AI-scores leads by behavior, and routes high-value prospects to reps.", icon: UserPlus, iconBg: "bg-emerald-500/10 text-emerald-600" },
+  { id: "basic-qualification-screening", name: "Basic Qualification Screening", desc: "Use website form data or initial import to determine eligibility, follow up unqualified with other options and remove lead, or take pre-configured next step.", icon: CheckCircle2, iconBg: "bg-indigo-500/10 text-indigo-600" },
   { id: "follow-up", name: "Automated Follow-Up Sequence", desc: "Sends tailored emails or alerts based on interactions or inactivity (e.g., remind to call when prospect opens email twice).", icon: Mail, iconBg: "bg-blue-500/10 text-blue-600" },
   { id: "pipeline", name: "Pipeline Management Automation", desc: "Auto-updates CRM deal stages from triggers (e.g., contract sent → deal moves to Proposal stage).", icon: GitBranch, iconBg: "bg-violet-500/10 text-violet-600" },
   { id: "meeting-scheduling", name: "Meeting Scheduling & Prep", desc: "Sends scheduling links to prospects, adds meetings to calendars, and creates agendas automatically.", icon: CalendarDays, iconBg: "bg-amber-500/10 text-amber-600" },
@@ -98,10 +117,20 @@ const AUTH_STORAGE_KEY = "client-portal-auth";
 const STORAGE_KEYS = {
   profile: "client-portal-profile",
   bookings: "client-portal-bookings",
+  bookingsCalendarConfig: "client-portal-bookings-calendar-config",
   workflow: (id: string) => `client-portal-workflow-${id}`,
   campaigns: "client-portal-campaigns",
   integrations: "client-portal-integrations",
+  membership: "client-portal-membership",
+  leadFieldsConfig: "client-portal-lead-fields-config",
+  importMappings: "client-portal-import-mappings",
 } as const;
+
+const CALENDAR_APPS = [
+  { id: "google-calendar", label: "Google Calendar" },
+  { id: "calendly", label: "Calendly" },
+  { id: "outlook-calendar", label: "Outlook Calendar" },
+] as const;
 
 function ClientPortalLogin({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
@@ -383,7 +412,9 @@ export default function ClientPortal() {
               setRole={setProfileRole}
             />
           )}
-          {activeSection === "bookings" && <BookingsContent />}
+          {activeSection === "bookings" && (
+            <BookingsContent onNavigateToSection={setActiveSection} />
+          )}
           {activeSection === "leads" && (
             <LeadsContent profileJob={profileJob} profileRole={profileRole} />
           )}
@@ -491,6 +522,20 @@ function WorkflowConfig({
   const [triggerConditions, setTriggerConditions] = useState("");
   const [actions, setActions] = useState("");
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [runFeedback, setRunFeedback] = useState<"idle" | "running" | "success" | "error">("idle");
+
+  const handleRunNow = async () => {
+    if (!workflow?.id) return;
+    setRunFeedback("running");
+    try {
+      const result = await runWorkflow(workflow.id);
+      setRunFeedback(result.success ? "success" : "error");
+      setTimeout(() => setRunFeedback("idle"), 2500);
+    } catch {
+      setRunFeedback("error");
+      setTimeout(() => setRunFeedback("idle"), 2500);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -687,9 +732,12 @@ function WorkflowConfig({
 
           <div className="pt-4 border-t border-gray-100">
             <label className="block text-sm font-medium text-gray-700 mb-2">Trigger conditions</label>
+            <p className="text-xs text-gray-500 mb-1.5">
+              Available lead fields: nextFollowUpDate, initialCaptureDate, currentStep, nextStep, source, group, etc.
+            </p>
             <input
               type="text"
-              placeholder="e.g. Lead status is new, Source is website..."
+              placeholder="e.g. nextFollowUpDate is today, currentStep is Qualify, Source is website..."
               value={triggerConditions}
               onChange={(e) => setTriggerConditions(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
@@ -705,7 +753,7 @@ function WorkflowConfig({
               className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
             />
           </div>
-          <div className="flex items-center gap-3 pt-6 mt-6 border-t border-gray-100">
+          <div className="flex flex-wrap items-center gap-3 pt-6 mt-6 border-t border-gray-100">
             <button
               type="button"
               onClick={handleSaveConfig}
@@ -714,11 +762,29 @@ function WorkflowConfig({
               <Save className="w-4 h-4" />
               Save configuration
             </button>
+            <button
+              type="button"
+              onClick={handleRunNow}
+              disabled={runFeedback === "running"}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Play className="w-4 h-4" />
+              {runFeedback === "running" ? "Running…" : "Run now"}
+            </button>
             {savedFeedback && (
               <span className="flex items-center gap-1.5 text-sm text-emerald-600">
                 <CheckCircle2 className="w-4 h-4" />
                 Saved
               </span>
+            )}
+            {runFeedback === "success" && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                <CheckCircle2 className="w-4 h-4" />
+                Ran successfully
+              </span>
+            )}
+            {runFeedback === "error" && (
+              <span className="flex items-center gap-1.5 text-sm text-red-600">Run failed</span>
             )}
           </div>
         </div>
@@ -740,21 +806,23 @@ type Lead = {
   referralSource?: string;
   referralPaymentMade?: boolean;
   referralPaymentAmount?: number;
+  /** ISO date string when lead was first captured */
+  initialCaptureDate?: string;
+  /** ISO date string for next follow-up */
+  nextFollowUpDate?: string;
+  /** Current workflow step label */
+  currentStep?: string;
+  /** Next workflow step label */
+  nextStep?: string;
 };
 
-const LEAD_FIELDS = [
-  { id: "name", label: "Name" },
-  { id: "email", label: "Email" },
-  { id: "phone", label: "Phone" },
-  { id: "company", label: "Company" },
-  { id: "source", label: "Source" },
-  { id: "notes", label: "Notes" },
-  { id: "group", label: "Group" },
-  { id: "isReferral", label: "Referral" },
-  { id: "referralSource", label: "Referred by" },
-  { id: "referralPaymentMade", label: "Ref. payment made" },
-  { id: "referralPaymentAmount", label: "Ref. amount" },
-] as const;
+const visibleFieldConfigFrom = (config: LeadFieldsConfig) =>
+  getVisibleFieldsFromConfig(config).map((f) => ({
+    dbName: f.dbName,
+    displayName: getDisplayName(config, f.dbName),
+  }));
+
+const LEAD_FIELDS = DEFAULT_LEAD_FIELDS_CONFIG.fields.map((f) => ({ id: f.dbName, label: f.displayName }));
 
 const GROUP_BY_OPTIONS = [
   { id: "none", label: "No grouping" },
@@ -763,18 +831,49 @@ const GROUP_BY_OPTIONS = [
   { id: "isReferral", label: "Referral" },
 ];
 
-const CSV_TEMPLATE = "name,email,phone,company,source,notes,is_referral,referred_by,ref_payment_made,ref_amount\nJohn Doe,john@example.com,+1 555-0100,Acme Corp,Website,Interested in quote,no,,,\nJane Smith,jane@example.com,+1 555-0101,Beta Inc,Referral,Follow up,yes,Jane Doe,yes,100";
+const CSV_TEMPLATE = "name,email,phone,company,source,notes,is_referral,referred_by,ref_payment_made,ref_amount,initial_capture_date,next_follow_up_date,current_step,next_step\nJohn Doe,john@example.com,+1 555-0100,Acme Corp,Website,Interested in quote,no,,,,,2025-03-11,2025-03-18,Qualify,Schedule call\nJane Smith,jane@example.com,+1 555-0101,Beta Inc,Referral,Follow up,yes,Jane Doe,yes,100,,2025-03-15,Proposal,Send contract";
 
 const LEAD_QUANTITY_OPTIONS = [50, 100, 250, 500] as const;
 const LEAD_QUALITY_OPTIONS = ["Low", "Medium", "High"] as const;
 const LEAD_VETTED_OPTIONS = ["Vetted", "Non-Vetted"] as const;
 const LEAD_OUTPUT_OPTIONS = ["CSV", "Excel (.xlsx)"] as const;
 
+/** Today in YYYY-MM-DD (for initialCaptureDate default) */
+function todayISO(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+/** Date N days from today in YYYY-MM-DD (CRM default: 7 days for next follow-up) */
+function todayPlusDays(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
+const LEAD_DEFAULTS = {
+  initialCaptureDate: () => todayISO(),
+  nextFollowUpDate: () => todayPlusDays(7),
+  currentStep: "New",
+  nextStep: "Qualify",
+} as const;
+
+function formatLeadDate(iso?: string): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
 function getLeadValue(lead: Lead, fieldId: string): string {
-  const v = lead[fieldId as keyof Lead];
+  const v = (lead as Record<string, unknown>)[fieldId];
   if (v === undefined || v === null) return "—";
   if (typeof v === "boolean") return v ? "Yes" : "No";
   if (typeof v === "number") return v > 0 ? `$${v.toFixed(2)}` : "—";
+  if (DATE_FIELD_DB_NAMES.has(fieldId) && typeof v === "string") return formatLeadDate(v);
   return String(v);
 }
 
@@ -804,6 +903,10 @@ function AddLeadDialog({
   const [referralSource, setReferralSource] = useState("");
   const [referralPaymentMade, setReferralPaymentMade] = useState(false);
   const [referralPaymentAmount, setReferralPaymentAmount] = useState("");
+  const [initialCaptureDate, setInitialCaptureDate] = useState("");
+  const [nextFollowUpDate, setNextFollowUpDate] = useState("");
+  const [currentStep, setCurrentStep] = useState("");
+  const [nextStep, setNextStep] = useState("");
 
   const reset = () => {
     setName("");
@@ -817,6 +920,10 @@ function AddLeadDialog({
     setReferralSource("");
     setReferralPaymentMade(false);
     setReferralPaymentAmount("");
+    setInitialCaptureDate("");
+    setNextFollowUpDate("");
+    setCurrentStep("");
+    setNextStep("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -833,6 +940,10 @@ function AddLeadDialog({
       referralSource: referralSource || undefined,
       referralPaymentMade: referralPaymentMade || undefined,
       referralPaymentAmount: referralPaymentAmount ? parseFloat(referralPaymentAmount) || undefined : undefined,
+      initialCaptureDate: initialCaptureDate || LEAD_DEFAULTS.initialCaptureDate(),
+      nextFollowUpDate: nextFollowUpDate || LEAD_DEFAULTS.nextFollowUpDate(),
+      currentStep: currentStep || LEAD_DEFAULTS.currentStep,
+      nextStep: nextStep || LEAD_DEFAULTS.nextStep,
     });
     reset();
     onOpenChange(false);
@@ -907,6 +1018,28 @@ function AddLeadDialog({
               </div>
             )}
           </div>
+          <div className="border-t border-gray-200 pt-4 space-y-4">
+            <p className="text-sm font-medium text-gray-700">Workflow (optional)</p>
+            <p className="text-xs text-gray-500">Set lead fields used by workflow triggers. Dates in YYYY-MM-DD.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-initial-capture">Initial capture date</Label>
+                <Input id="add-initial-capture" type="date" value={initialCaptureDate} onChange={(e) => setInitialCaptureDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-next-followup">Next follow-up date</Label>
+                <Input id="add-next-followup" type="date" value={nextFollowUpDate} onChange={(e) => setNextFollowUpDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-current-step">Current step</Label>
+                <Input id="add-current-step" value={currentStep} onChange={(e) => setCurrentStep(e.target.value)} placeholder="e.g. Qualify" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-next-step">Next step</Label>
+                <Input id="add-next-step" value={nextStep} onChange={(e) => setNextStep(e.target.value)} placeholder="e.g. Schedule call" />
+              </div>
+            </div>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
             <Button type="submit" className="bg-sv-blue hover:bg-sv-blue-light">Add Lead</Button>
@@ -922,7 +1055,8 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [leadView, setLeadView] = useState<"grid" | "grouped">("grid");
   const [groupByField, setGroupByField] = useState<string>("none");
-  const [visibleFields, setVisibleFields] = useState<string[]>(LEAD_FIELDS.map((f) => f.id));
+  const [fieldConfig, setFieldConfig] = useState<LeadFieldsConfig>(() => loadLeadFieldsConfig());
+  const visibleFieldConfig = visibleFieldConfigFrom(fieldConfig);
   const [isDragging, setIsDragging] = useState(false);
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -1006,6 +1140,10 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
             const referralPaymentMade = /^(1|yes|true)$/i.test(refPayRaw);
             const refAmt = get(["ref_amount", "refamount"]);
             const referralPaymentAmount = refAmt ? parseFloat(refAmt) || undefined : undefined;
+            const initialCaptureDate = get(["initial_capture_date", "initialcapturedate"]);
+            const nextFollowUpDate = get(["next_follow_up_date", "nextfollowupdate"]);
+            const currentStep = get(["current_step", "currentstep"]);
+            const nextStep = get(["next_step", "nextstep"]);
             return {
               id: crypto.randomUUID(),
               name,
@@ -1018,6 +1156,10 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
               referralSource: referralSource || undefined,
               referralPaymentMade: referralPaymentMade || undefined,
               referralPaymentAmount,
+              initialCaptureDate: initialCaptureDate || LEAD_DEFAULTS.initialCaptureDate(),
+              nextFollowUpDate: nextFollowUpDate || LEAD_DEFAULTS.nextFollowUpDate(),
+              currentStep: currentStep || LEAD_DEFAULTS.currentStep,
+              nextStep: nextStep || LEAD_DEFAULTS.nextStep,
             };
           });
         setLeads((prev) => [...prev, ...newLeads]);
@@ -1258,23 +1400,30 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
                     Fields
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-56">
+                <PopoverContent align="end" className="w-56 max-h-80 overflow-y-auto">
                   <p className="text-sm font-medium mb-3">Visible columns</p>
                   <div className="space-y-2">
-                    {LEAD_FIELDS.map((f) => (
-                      <label key={f.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                    {fieldConfig.fields.map((f) => (
+                      <label key={f.dbName} className="flex items-center gap-2 cursor-pointer text-sm">
                         <Checkbox
-                          checked={visibleFields.includes(f.id)}
+                          checked={f.visible}
                           onCheckedChange={(checked) => {
-                            setVisibleFields((prev) =>
-                              checked ? [...prev, f.id] : prev.filter((id) => id !== f.id)
+                            const next = fieldConfig.fields.map((x) =>
+                              x.dbName === f.dbName ? { ...x, visible: !!checked } : x
                             );
+                            setFieldConfig({ fields: next });
+                            saveLeadFieldsConfig({ fields: next });
                           }}
                         />
-                        {f.label}
+                        {f.displayName}
                       </label>
                     ))}
                   </div>
+                  <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
+                    <Link href="/client-portal#leads-config" className="text-sv-blue hover:underline">
+                      Configure fields & display names
+                    </Link>
+                  </p>
                 </PopoverContent>
               </Popover>
             </div>
@@ -1506,6 +1655,7 @@ function ProfileContent({
   const [selectedPlatform, setSelectedPlatform] = useState<SocialId>("facebook");
   const [urlInput, setUrlInput] = useState("");
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -1523,7 +1673,40 @@ function ProfileContent({
     } catch {}
   }, [setIndustry, setJob, setRole]);
 
+  const isValidEmail = (v: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const isValidPhone = (v: string) => {
+    const digits = v.replace(/\D/g, "");
+    return digits.length >= 10;
+  };
+
+  const requiredFields = [
+    { key: "fullName", value: fullName, label: "Full name" },
+    { key: "email", value: email, label: "Email" },
+    { key: "phone", value: phone, label: "Phone number" },
+    { key: "industry", value: industry, label: "Industry" },
+    { key: "job", value: job, label: "Job" },
+    { key: "role", value: role, label: "Role" },
+  ] as const;
+  const missingFields = requiredFields.filter((f) => !(f.value && String(f.value).trim()));
+  const formatErrors: string[] = [];
+  if (fullName.trim().length > 0 && fullName.trim().length < 2) formatErrors.push("Full name must be at least 2 characters");
+  if (email.trim() && !isValidEmail(email)) formatErrors.push("Email must be a valid address (e.g. you@example.com)");
+  if (phone.trim() && !isValidPhone(phone)) formatErrors.push("Phone must have at least 10 digits");
+  const allErrors = [
+    ...missingFields.map((f) => f.label),
+    ...formatErrors,
+  ];
+  const isComplete = missingFields.length === 0 && formatErrors.length === 0;
+  const emailInvalid = email.trim() !== "" && !isValidEmail(email);
+  const phoneInvalid = phone.trim() !== "" && !isValidPhone(phone);
+
   const handleSaveProfile = () => {
+    if (!isComplete) {
+      setValidationErrors(allErrors);
+      return;
+    }
+    setValidationErrors([]);
     const data = {
       fullName,
       email,
@@ -1569,42 +1752,52 @@ function ProfileContent({
       <div className="max-w-xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
           <h3 className="font-semibold text-gray-900">Personal information</h3>
+          {validationErrors.length > 0 && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+              <span className="font-medium">{missingFields.length > 0 ? "Please fill in all required fields" : "Please fix the following"}: </span>
+              {validationErrors.join(", ")}
+            </div>
+          )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full name <span className="text-red-500">*</span></label>
             <input
               type="text"
               placeholder="Your name"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
+              onChange={(e) => { setFullName(e.target.value); setValidationErrors([]); }}
+              required
+              className={`w-full px-4 py-2 rounded-lg border text-sm ${!fullName.trim() && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-red-500">*</span></label>
             <input
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
+              onChange={(e) => { setEmail(e.target.value); setValidationErrors([]); }}
+              required
+              className={`w-full px-4 py-2 rounded-lg border text-sm ${(!email.trim() || !isValidEmail(email)) && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone number</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone number <span className="text-red-500">*</span></label>
             <input
               type="tel"
               placeholder="+1 (555) 000-0000"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm"
+              onChange={(e) => { setPhone(e.target.value); setValidationErrors([]); }}
+              required
+              className={`w-full px-4 py-2 rounded-lg border text-sm ${(!phone.trim() || !isValidPhone(phone)) && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Industry <span className="text-red-500">*</span></label>
             <select
               value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+              onChange={(e) => { setIndustry(e.target.value); setValidationErrors([]); }}
+              required
+              className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!industry && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
             >
               <option value="">Select your industry</option>
               {INDUSTRY_OPTIONS.map((opt) => (
@@ -1615,11 +1808,12 @@ function ProfileContent({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Job</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Job <span className="text-red-500">*</span></label>
             <select
               value={job}
-              onChange={(e) => setJob(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+              onChange={(e) => { setJob(e.target.value); setValidationErrors([]); }}
+              required
+              className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!job && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
             >
               <option value="">Select your job</option>
               {JOB_OPTIONS.map((opt) => (
@@ -1630,11 +1824,12 @@ function ProfileContent({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Role <span className="text-red-500">*</span></label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+              onChange={(e) => { setRole(e.target.value); setValidationErrors([]); }}
+              required
+              className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!role && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
             >
               <option value="">Select your role</option>
               {ROLE_OPTIONS.map((opt) => (
@@ -1740,7 +1935,8 @@ function ProfileContent({
           <button
             type="button"
             onClick={handleSaveProfile}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
+            disabled={!isComplete}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
             Save profile
@@ -1796,7 +1992,53 @@ function dateToYYYYMMDD(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-function BookingsContent() {
+type BookingCalendarConfig = { sourceIds: string[]; defaultId?: string };
+
+function BookingsContent({ onNavigateToSection }: { onNavigateToSection?: (section: SectionId) => void }) {
+  const [calendarConfig, setCalendarConfig] = useState<BookingCalendarConfig>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.bookingsCalendarConfig);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          sourceIds: Array.isArray(parsed?.sourceIds) ? parsed.sourceIds : [],
+          defaultId: typeof parsed?.defaultId === "string" ? parsed.defaultId : undefined,
+        };
+      }
+    } catch {}
+    return { sourceIds: [], defaultId: undefined };
+  });
+  const [connectedCalendars, setConnectedCalendars] = useState<{ id: string; label: string }[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.integrations);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const list = Array.isArray(parsed) ? parsed : [];
+      const calendarIds = new Set<string>(CALENDAR_APPS.map((c) => c.id));
+      const connected = list
+        .filter((i: { integrationId: string }) => calendarIds.has(i.integrationId))
+        .map((i: { integrationId: string }) => ({
+          id: i.integrationId,
+          label: CALENDAR_APPS.find((c) => c.id === i.integrationId)?.label ?? i.integrationId,
+        }));
+      setConnectedCalendars(connected);
+    } catch {}
+  }, []);
+  const saveCalendarConfig = (next: BookingCalendarConfig) => {
+    setCalendarConfig(next);
+    localStorage.setItem(STORAGE_KEYS.bookingsCalendarConfig, JSON.stringify(next));
+  };
+  const toggleCalendarSource = (id: string) => {
+    const nextIds = calendarConfig.sourceIds.includes(id)
+      ? calendarConfig.sourceIds.filter((x) => x !== id)
+      : [...calendarConfig.sourceIds, id];
+    const nextDefault = calendarConfig.defaultId === id ? undefined : calendarConfig.defaultId;
+    saveCalendarConfig({ ...calendarConfig, sourceIds: nextIds, defaultId: nextIds.includes(nextDefault ?? "") ? nextDefault : (nextIds[0] ?? undefined) });
+  };
+  const setDefaultCalendar = (id: string) => {
+    saveCalendarConfig({ ...calendarConfig, defaultId: id });
+  };
   const [blocks, setBlocks] = useState<TimeSlotBlock[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.bookings);
@@ -1858,6 +2100,65 @@ function BookingsContent() {
       </div>
 
       <div className="max-w-2xl space-y-6">
+        {/* Calendar sources — use connected calendar apps for availability */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5 text-sv-blue" />
+            Calendar sources
+          </h3>
+          <p className="text-sm text-gray-500">
+            Use connected calendar apps for availability. Select which calendars to use and set a default. Connect calendars in Integrations first.
+          </p>
+          {connectedCalendars.length === 0 ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
+              <p className="text-sm text-gray-600">No calendar apps connected yet.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onNavigateToSection?.("integrations")}
+                className="shrink-0"
+              >
+                <Plug2 className="w-4 h-4 mr-1.5" />
+                Connect calendars
+              </Button>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {connectedCalendars.map((cal) => {
+                const isSelected = calendarConfig.sourceIds.includes(cal.id);
+                const isDefault = calendarConfig.defaultId === cal.id;
+                return (
+                  <li
+                    key={cal.id}
+                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Checkbox
+                        id={`cal-${cal.id}`}
+                        checked={isSelected}
+                        onCheckedChange={() => toggleCalendarSource(cal.id)}
+                      />
+                      <label htmlFor={`cal-${cal.id}`} className="text-sm font-medium text-gray-900 cursor-pointer truncate">
+                        {cal.label}
+                      </label>
+                      {isSelected && (
+                        <Button
+                          variant={isDefault ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setDefaultCalendar(cal.id)}
+                        >
+                          {isDefault ? "Default" : "Set as default"}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
         {/* Add time slot form */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
           <h3 className="font-semibold text-gray-900">Add time slot</h3>
@@ -2056,11 +2357,37 @@ function BookingsContent() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Scheduling tool</label>
-              <select className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white">
-                <option>Calendly</option>
-                <option>Cal.com</option>
-                <option>Google Calendar</option>
+              <select
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white w-full min-w-[180px]"
+                value={calendarConfig.defaultId ?? (calendarConfig.sourceIds[0] ?? "")}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (id) {
+                    setDefaultCalendar(id);
+                    if (!calendarConfig.sourceIds.includes(id)) toggleCalendarSource(id);
+                  }
+                }}
+              >
+                <option value="">Select calendar...</option>
+                {(calendarConfig.sourceIds.length > 0 ? calendarConfig.sourceIds : connectedCalendars.map((c) => c.id)).map((sid) => {
+                  const cal = connectedCalendars.find((c) => c.id === sid) ?? CALENDAR_APPS.find((c) => c.id === sid) ?? { id: sid, label: sid };
+                  return (
+                    <option key={cal.id} value={cal.id}>
+                      {cal.label}{calendarConfig.defaultId === cal.id ? " (default)" : ""}
+                    </option>
+                  );
+                })}
               </select>
+              {connectedCalendars.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Connect calendars in Integrations first.
+                </p>
+              )}
+              {connectedCalendars.length > 0 && calendarConfig.sourceIds.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Select a calendar above, or configure sources in the section above.
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -3162,6 +3489,13 @@ function PaymentContent() {
 
 const MEMBERSHIP_PLANS = [
   {
+    id: "pay-as-you-go",
+    name: "Pay as you go",
+    workflows: "1 workflow",
+    credits: "Pay per use",
+    features: ["1 workflow", "Pay only for what you use", "Add credits anytime", "No monthly commitment"],
+  },
+  {
     id: "starter",
     name: "Starter",
     workflows: "2 workflows",
@@ -3184,36 +3518,62 @@ const MEMBERSHIP_PLANS = [
   },
 ] as const;
 
+type MembershipPlanId = (typeof MEMBERSHIP_PLANS)[number]["id"];
+
 function MembershipContent() {
-  const currentPlanId = "starter";
+  const [currentPlanId, setCurrentPlanId] = useState<MembershipPlanId>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.membership);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const id = parsed?.planId;
+        if (id && MEMBERSHIP_PLANS.some((p) => p.id === id)) return id as MembershipPlanId;
+      }
+    } catch {}
+    return "pay-as-you-go";
+  });
+
+  const currentPlan = MEMBERSHIP_PLANS.find((p) => p.id === currentPlanId);
+
+  const handleUpgrade = (planId: MembershipPlanId) => {
+    setCurrentPlanId(planId);
+    localStorage.setItem(STORAGE_KEYS.membership, JSON.stringify({ planId }));
+  };
 
   return (
     <div>
       <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Membership</h1>
       <p className="text-gray-600 mb-8">
-        View your current plan and manage your subscription.
+        Start with pay as you go and upgrade when you’re ready. View your current plan and manage your subscription.
       </p>
 
       <div className="max-w-3xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Crown className="w-5 h-5 text-sv-blue" />
-            Current plan: Starter
+            Current plan: {currentPlan?.name ?? "Pay as you go"}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            You’re on the Starter plan with 2 workflows and the ability to add credits.
+            {currentPlan?.id === "pay-as-you-go"
+              ? "You’re on the default pay-as-you-go plan. Pay only for what you use with no monthly commitment."
+              : `You’re on the ${currentPlan?.name} plan with ${currentPlan?.workflows} and ${currentPlan?.credits}.`}
           </p>
-          <button
-            type="button"
-            className="text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors"
-          >
-            Add credits
-          </button>
+          {(currentPlan?.id === "pay-as-you-go" || currentPlan?.id === "starter") && (
+            <button
+              type="button"
+              className="text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors"
+            >
+              Add credits
+            </button>
+          )}
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <h3 className="font-semibold text-gray-900 mb-4">All plans</h3>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <p className="text-sm text-gray-500 mb-4">
+            Pay as you go is the default. Upgrade to a plan with more workflows and included credits.
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MEMBERSHIP_PLANS.map((plan) => {
               const isCurrent = plan.id === currentPlanId;
               return (
@@ -3240,9 +3600,12 @@ function MembershipContent() {
                   {!isCurrent && (
                     <button
                       type="button"
+                      onClick={() => handleUpgrade(plan.id)}
                       className="w-full py-2 text-sm font-medium text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
                     >
-                      Upgrade to {plan.name}
+                      {plan.id === "pay-as-you-go"
+                        ? "Switch to Pay as you go"
+                        : `Upgrade to ${plan.name}`}
                     </button>
                   )}
                 </div>

@@ -23,6 +23,7 @@ export const ENDPOINTS = {
   workflows: {
     get: (id: string) => `/workflows/${id}`,
     save: (id: string) => `/workflows/${id}`,
+    run: (id: string) => `/workflows/${id}/run`,
   },
   campaigns: {
     list: "/campaigns",

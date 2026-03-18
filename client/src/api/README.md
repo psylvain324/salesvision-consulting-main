@@ -32,5 +32,9 @@ Defined in `endpoints.ts`. Update paths when your API routes are defined.
 | Campaigns | `/campaigns`         | `/campaigns`              |
 | Integrations | `/integrations`    | `/integrations`           |
 | Leads     | `/leads`             | `/leads`, `/leads/:id`, `/leads/import` |
+| Workflows | `/workflows/:id`     | `/workflows/:id`, `POST /workflows/:id/run` (manual run) |
+
+**Lead fields** (for trigger conditions and display): `nextFollowUpDate`, `initialCaptureDate`, `currentStep`, `nextStep`, plus `source`, `group`, etc.
+| Workflows | `/workflows/:id`     | `/workflows/:id`, **POST** `/workflows/:id/run` (manual run) |
 | Payment   | `/payment/methods`   | `/payment/methods`, `/payment/methods/:id` |
 | Membership| `/membership`        | —                         |

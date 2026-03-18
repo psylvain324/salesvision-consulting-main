@@ -52,3 +52,18 @@ export async function saveWorkflowConfig(
   }
   return api.put<WorkflowConfig>(ENDPOINTS.workflows.save(workflowId), config);
 }
+
+/** POST /workflows/:id/run — run workflow manually */
+export async function runWorkflow(
+  workflowId: string,
+  options?: { leadId?: string }
+): Promise<{ success: boolean; message?: string }> {
+  if (USE_MOCK_API) {
+    // Placeholder: simulate success
+    return { success: true, message: "Workflow run queued (mock)" };
+  }
+  return api.post<{ success: boolean; message?: string }>(
+    ENDPOINTS.workflows.run(workflowId),
+    options
+  );
+}
