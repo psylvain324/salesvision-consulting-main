@@ -49,7 +49,7 @@ const coreServices = [
     icon: Brain,
     label: "AUTOMATION",
     title: "AI Automation",
-    desc: "Intelligent workflows that automate lead generation, sales processes, and client engagement at scale.",
+    desc: "Intelligent workflows that automate lead generation, sales processes, and client engagement at scale. From follow-up sequences to lead scoring and CRM integration—we build automation that saves time and boosts conversions.",
     color: "violet" as const,
     href: "/workflows",
     imageSrc: "/Images/Logos/Dev2.png",
@@ -58,7 +58,7 @@ const coreServices = [
     icon: Globe,
     label: "CAMPAIGNS",
     title: "Digital Marketing",
-    desc: "Data-driven campaigns that reach the right audience with precision targeting and measurable ROI.",
+    desc: "Data-driven campaigns that reach the right audience with precision targeting and measurable ROI. We run SEO, paid ads, social media, and email campaigns—with clear reporting so you see exactly what’s working.",
     color: "orange" as const,
     href: "/marketing-media",
     imageSrc: "/Images/Logos/Marketing_Logo_4.png",
@@ -67,7 +67,7 @@ const coreServices = [
     icon: Code,
     label: "WEBSITES",
     title: "Web Design & Development",
-    desc: "Modern, responsive websites and web applications built with cutting-edge technology stacks.",
+    desc: "Modern, responsive websites and web applications built with cutting-edge technology stacks. Fast loading, mobile-first, and designed to convert—whether you need a simple landing page or a full e‑commerce site.",
     color: "emerald" as const,
     href: "/services#web",
     imageSrc: "/Images/Logos/Dev1.png",
@@ -76,7 +76,7 @@ const coreServices = [
     icon: BarChart3,
     label: "STRATEGY",
     title: "Technology Consulting",
-    desc: "Strategic guidance on digital transformation, system architecture, and technology adoption.",
+    desc: "Strategic guidance on digital transformation, system architecture, and technology adoption. We help you choose the right tools, streamline workflows, and scale your operations without the guesswork.",
     color: "blue" as const,
     href: "/services#consulting",
     imageSrc: "/Images/Logos/Marketing_Logo_5.png",
@@ -85,7 +85,7 @@ const coreServices = [
     icon: Zap,
     label: "BESPOKE",
     title: "Custom Development",
-    desc: "Bespoke applications tailored to your unique business requirements and growth objectives.",
+    desc: "Bespoke applications tailored to your unique business requirements and growth objectives. Web apps, APIs, databases, and automation tools—built to fit your workflow and scale as you grow.",
     color: "indigo" as const,
     href: "/services#software",
     imageSrc: "/Images/Logos/CustomDev_Logo_2.png",
@@ -94,7 +94,7 @@ const coreServices = [
     icon: Film,
     label: "CONTENT",
     title: "Video/Audio Editing",
-    desc: "Professional video and audio editing for social media — create engaging content that stands out on your channels.",
+    desc: "Professional video and audio editing for social media—create engaging content that stands out on your channels. Reels, ads, podcasts, and branded content designed to stop the scroll and drive engagement.",
     color: "rose" as const,
     href: "/services#video",
     imageSrc: "/Images/Logos/Audio2.png",
@@ -218,13 +218,13 @@ export default function Home() {
                 <span className="gradient-text-blend-dark">Technology Assistance Where</span>{" "}
                 <span className="gradient-text-blend">You Need it</span>
               </h2>
-              <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">
+              <p className="mt-4 text-muted-foreground max-w-[45rem] mx-auto text-lg lg:text-[1.125rem]">
                 We help small and medium-sized businesses innovate and grow. We also contract into larger projects where our specializations align.
               </p>
             </div>
           </AnimatedSection>
 
-          <div className="space-y-10 lg:space-y-14 max-w-[58rem] mx-auto w-full">
+          <div className="space-y-10 lg:space-y-14 max-w-[61rem] mx-auto w-full">
             {coreServices.map((service, i) => {
               const isEven = i % 2 === 1;
               const IconComponent = service.icon;
@@ -246,25 +246,26 @@ export default function Home() {
                         }`}
                       >
                         <span
-                          className={`inline-block text-xs font-semibold uppercase tracking-widest mb-3 ${colors.text} opacity-90`}
+                          className={`inline-block text-[0.8125rem] font-semibold uppercase tracking-widest mb-3 ${colors.text} opacity-90`}
                         >
                           {service.label}
                         </span>
-                        <h3 className="font-[Sora] text-xl sm:text-2xl font-semibold text-foreground mb-3">
+                        <h3 className="font-[Sora] text-xl sm:text-2xl lg:text-[1.6875rem] font-semibold text-foreground mb-3">
                           {service.title}
                         </h3>
-                        <p className="text-muted-foreground leading-relaxed max-w-2xl">
+                        <p className="text-muted-foreground text-base lg:text-[1.0625rem] leading-relaxed max-w-2xl lg:max-w-[45rem]">
                           {service.desc}
                         </p>
                         <span
-                          className={`mt-5 inline-flex items-center gap-2 text-sm font-medium ${colors.text} group-hover:gap-3 transition-all`}
+                          className={`mt-5 inline-flex items-center gap-2 text-[0.9375rem] font-medium ${colors.text} group-hover:gap-3 transition-all`}
                         >
                           Learn more <ArrowRight size={14} />
                         </span>
                       </div>
 
-                      {/* Large icon/image block — no background container, images larger */}
+                      {/* Large icon/image block — partial gradient border on aligned side */}
                       <div className="flex-shrink-0 order-1 lg:order-none">
+                        <div className={`service-image-gradient-border ${isEven ? "service-image-gradient-border--left" : "service-image-gradient-border--right"} flex items-center justify-center`}>
                         <motion.div
                           className={`relative w-72 h-72 sm:w-80 sm:h-80 lg:w-[28rem] lg:h-[28rem] flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}
                           whileInView={{ opacity: 1, scale: 1 }}
@@ -287,6 +288,7 @@ export default function Home() {
                             )}
                           </motion.div>
                         </motion.div>
+                        </div>
                       </div>
                     </div>
                   </Link>

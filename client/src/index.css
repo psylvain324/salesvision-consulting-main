@@ -405,6 +405,57 @@
       0 0 12px oklch(0.72 0.19 55 / 0.5),
       0 0 6px oklch(0.72 0.19 55 / 0.3);
   }
+
+  /* Partial gradient border — CodePen jeremyfrank/PoajdwX: left/right only, tapered top/bottom, thin, gap, purple→blue→green */
+  .service-image-gradient-border {
+    --gradient-border-width: 0.5px;
+    --gradient-distance: 50%;
+    position: relative;
+    padding: 1.5rem;
+  }
+
+  .service-image-gradient-border--left {
+    --gradient-from: 180deg;
+  }
+
+  .service-image-gradient-border--right {
+    --gradient-from: 0deg;
+  }
+
+  .service-image-gradient-border::after {
+    content: "";
+    border-radius: 2.5rem;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: conic-gradient(
+      from var(--gradient-from),
+      oklch(0.50 0.20 290),
+      oklch(0.42 0.18 260),
+      oklch(0.55 0.18 155) var(--gradient-distance),
+      transparent var(--gradient-distance)
+    );
+    -webkit-mask:
+      linear-gradient(to bottom, transparent 0%, #fff 15%, #fff 85%, transparent 100%),
+      radial-gradient(
+        farthest-side,
+        transparent calc(100% - var(--gradient-border-width)),
+        #fff 100%
+      );
+    -webkit-mask-composite: source-in;
+    mask:
+      linear-gradient(to bottom, transparent 0%, #fff 15%, #fff 85%, transparent 100%),
+      radial-gradient(
+        farthest-side,
+        transparent calc(100% - var(--gradient-border-width)),
+        #fff 100%
+      );
+    mask-composite: intersect;
+    pointer-events: none;
+  }
 }
 
 /* Custom scrollbar */
