@@ -454,7 +454,7 @@ function WorkflowsContent({
         Select a workflow to configure. Each workflow can be customized to your needs.
       </p>
 
-      <div className="grid sm:grid-cols-2 gap-5 max-w-4xl">
+      <div className="grid sm:grid-cols-2 gap-5 max-w-6xl">
         {workflowTemplates.map((workflow) => {
           const IconComponent = workflow.icon;
           return (
@@ -591,7 +591,7 @@ function WorkflowConfig({
       </h1>
       <p className="text-gray-600 mb-8">{workflow?.desc}</p>
 
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-4xl">
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Configuration options</h3>
           <label className="flex items-center gap-2 mb-6">
@@ -1202,7 +1202,7 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
         Import leads from a CSV file. Imported leads will be added to your workflows and available for follow-up.
       </p>
 
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-4xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
           <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-sv-blue" />
@@ -1749,7 +1749,7 @@ function ProfileContent({
         Manage your personal information and social accounts for marketing and sales.
       </p>
 
-      <div className="max-w-xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
           <h3 className="font-semibold text-gray-900">Personal information</h3>
           {validationErrors.length > 0 && (
@@ -2099,7 +2099,7 @@ function BookingsContent({ onNavigateToSection }: { onNavigateToSection?: (secti
         <strong>Note:</strong> These are time slots being pursued to be filled with bookings, not passive availability.
       </div>
 
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-4xl space-y-6">
         {/* Calendar sources — use connected calendar apps for availability */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
           <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -2542,7 +2542,7 @@ function MarketingCampaignsContent() {
         Create and manage AI-powered social media and ad campaigns. Configure frequency, schedule, budgets, and automation for each platform.
       </p>
 
-      <div className="max-w-3xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         {!showAddForm ? (
           <div className="rounded-xl border border-gray-200 bg-white p-6">
             <button
@@ -3163,7 +3163,7 @@ function IntegrationsContent() {
         Connect your tools and platforms. Data will sync across your workflows.
       </p>
 
-      <div className="max-w-xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
           <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Plus className="w-5 h-5 text-sv-blue" />
@@ -3468,7 +3468,7 @@ function PaymentContent() {
         Manage your payment methods for subscriptions and one-time purchases.
       </p>
 
-      <div className="max-w-xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Saved payment methods</h3>
           <div className="flex flex-col items-center justify-center py-8 rounded-lg bg-gray-50 border border-dashed border-gray-200">
@@ -3547,7 +3547,7 @@ function MembershipContent() {
         Start with pay as you go and upgrade when you’re ready. View your current plan and manage your subscription.
       </p>
 
-      <div className="max-w-3xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Crown className="w-5 h-5 text-sv-blue" />

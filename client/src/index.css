@@ -37,6 +37,16 @@
   100% { transform: scale(1.06) translate(-1.5%, -1%); }
 }
 
+/* Service icon subtle glow pulse — Treppy-style alternating layout */
+@keyframes service-icon-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.02); }
+}
+
+.service-icon-glow {
+  animation: service-icon-pulse 4s ease-in-out infinite;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -253,6 +263,19 @@
   /* Logo-style gradient — blue to purple, darker with more blue, matches SalesVision header logo */
   .gradient-text-logo {
     background: linear-gradient(90deg, oklch(0.40 0.17 260), oklch(0.46 0.18 268), oklch(0.52 0.19 285));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Darker solid (left side) — pairs with gradient-text-blend for split headings */
+  .gradient-text-blend-dark {
+    color: oklch(0.28 0.17 260);
+  }
+
+  /* Green gradient for "You Need it" and "We Specialize In" — emerald shades only */
+  .gradient-text-blend {
+    background: linear-gradient(90deg, oklch(0.42 0.16 155) 0%, oklch(0.50 0.17 155) 50%, oklch(0.55 0.18 155) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

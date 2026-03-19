@@ -47,45 +47,57 @@ const serviceIconColors: Record<string, { bg: string; text: string }> = {
 const coreServices = [
   {
     icon: Brain,
+    label: "AUTOMATION",
     title: "AI Automation",
     desc: "Intelligent workflows that automate lead generation, sales processes, and client engagement at scale.",
     color: "violet" as const,
     href: "/workflows",
+    imageSrc: "/Images/Logos/Dev2.png",
   },
   {
     icon: Globe,
+    label: "CAMPAIGNS",
     title: "Digital Marketing",
     desc: "Data-driven campaigns that reach the right audience with precision targeting and measurable ROI.",
     color: "orange" as const,
     href: "/marketing-media",
+    imageSrc: "/Images/Logos/Marketing_Logo_4.png",
   },
   {
     icon: Code,
+    label: "WEBSITES",
     title: "Web Design & Development",
     desc: "Modern, responsive websites and web applications built with cutting-edge technology stacks.",
     color: "emerald" as const,
     href: "/services#web",
+    imageSrc: "/Images/Logos/Dev1.png",
   },
   {
     icon: BarChart3,
+    label: "STRATEGY",
     title: "Technology Consulting",
     desc: "Strategic guidance on digital transformation, system architecture, and technology adoption.",
     color: "blue" as const,
     href: "/services#consulting",
+    imageSrc: "/Images/Logos/Marketing_Logo_5.png",
   },
   {
     icon: Zap,
+    label: "BESPOKE",
     title: "Custom Development",
     desc: "Bespoke applications tailored to your unique business requirements and growth objectives.",
     color: "indigo" as const,
     href: "/services#software",
+    imageSrc: "/Images/Logos/CustomDev_Logo_2.png",
   },
   {
     icon: Film,
+    label: "CONTENT",
     title: "Video/Audio Editing",
     desc: "Professional video and audio editing for social media — create engaging content that stands out on your channels.",
     color: "rose" as const,
     href: "/services#video",
+    imageSrc: "/Images/Logos/Audio2.png",
   },
 ];
 
@@ -179,9 +191,9 @@ export default function Home() {
                   <ArrowRight size={15} />
                 </span>
               </Link>
-              <Link href="/contact">
+              <Link href="/workflows">
                 <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-950 to-purple-900 hover:opacity-95 rounded-xl transition-all duration-200 shadow-lg shadow-purple-950/40">
-                  Schedule a Consultation
+                  Explore Workflows
                   <ArrowRight size={15} />
                 </span>
               </Link>
@@ -192,15 +204,19 @@ export default function Home() {
         <ScrollDownButton to="section-services" light className="bottom-8" />
       </section>
 
-      {/* ===== CORE SERVICES ===== */}
-      <section id="section-services" className="py-24 lg:py-32 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
+      {/* ===== CORE SERVICES — Treppy-style alternating layout ===== */}
+      <section id="section-services" className="py-24 lg:py-32 relative overflow-hidden">
+        {/* Subtle gradient in the middle — similar to Treppy */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.03] via-purple-500/[0.02] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-sv-blue/[0.02] to-transparent" />
+
         <div className="container relative">
           <AnimatedSection>
-            <div className="text-center mb-10">
-              <span className="section-label text-sv-blue/60 mb-4 inline-block">What We Do</span>
-              <h2 className="font-[Sora] text-2xl sm:text-3xl lg:text-4xl font-bold uppercase tracking-tight gradient-text-logo">
-                Technology Assistance Where You Need It
+            <div className="text-center mb-16 lg:mb-20">
+              <span className="section-label text-sv-blue/85 mb-4 inline-block text-base [text-shadow:0_1px_3px_rgba(0,0,0,0.12)]">What We Do</span>
+              <h2 className="font-[Sora] text-2xl sm:text-3xl lg:text-4xl font-bold uppercase tracking-tight">
+                <span className="gradient-text-blend-dark">Technology Assistance Where</span>{" "}
+                <span className="gradient-text-blend">You Need it</span>
               </h2>
               <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">
                 We help small and medium-sized businesses innovate and grow. We also contract into larger projects where our specializations align.
@@ -208,29 +224,75 @@ export default function Home() {
             </div>
           </AnimatedSection>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-2">
-            {coreServices.map((service, i) => (
-              <AnimatedSection key={service.title} delay={i * 0.08}>
-                <Link href={service.href}>
-                  <div className="group relative rounded-2xl glass-card glass-card-hover p-7 transition-all duration-300 h-full flex flex-col">
+          <div className="space-y-10 lg:space-y-14 max-w-[58rem] mx-auto w-full">
+            {coreServices.map((service, i) => {
+              const isEven = i % 2 === 1;
+              const IconComponent = service.icon;
+              const colors = serviceIconColors[service.color];
+              return (
+                <AnimatedSection key={service.title} delay={i * 0.06} className="w-full">
+                  <Link href={service.href} className="block w-full">
                     <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${serviceIconColors[service.color].bg}`}
+                      className={`group flex flex-col gap-8 lg:gap-12 items-center w-full ${
+                        isEven
+                          ? "lg:flex-row-reverse lg:justify-end"
+                          : "lg:flex-row lg:justify-start"
+                      }`}
                     >
-                      <service.icon className={`w-5 h-5 ${serviceIconColors[service.color].text}`} />
+                      {/* Content block — left-aligned when row is left, right-aligned when row is right */}
+                      <div
+                        className={`flex-1 min-w-0 text-center order-2 lg:order-none ${
+                          isEven ? "lg:text-right" : "lg:text-left"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block text-xs font-semibold uppercase tracking-widest mb-3 ${colors.text} opacity-90`}
+                        >
+                          {service.label}
+                        </span>
+                        <h3 className="font-[Sora] text-xl sm:text-2xl font-semibold text-foreground mb-3">
+                          {service.title}
+                        </h3>
+                        <p className="text-muted-foreground leading-relaxed max-w-2xl">
+                          {service.desc}
+                        </p>
+                        <span
+                          className={`mt-5 inline-flex items-center gap-2 text-sm font-medium ${colors.text} group-hover:gap-3 transition-all`}
+                        >
+                          Learn more <ArrowRight size={14} />
+                        </span>
+                      </div>
+
+                      {/* Large icon/image block — no background container, images larger */}
+                      <div className="flex-shrink-0 order-1 lg:order-none">
+                        <motion.div
+                          className={`relative w-72 h-72 sm:w-80 sm:h-80 lg:w-[28rem] lg:h-[28rem] flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          initial={{ opacity: 0.7, scale: 0.95 }}
+                          viewport={{ once: true, margin: "-50px" }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <motion.div
+                            animate={{ y: [0, -4, 0] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            className="w-full h-full flex items-center justify-center"
+                          >
+                            {"imageSrc" in service && service.imageSrc ? (
+                              <img src={service.imageSrc} alt="" className="w-full h-full object-contain" />
+                            ) : (
+                              <IconComponent
+                                className={`w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ${colors.text}`}
+                                strokeWidth={1.5}
+                              />
+                            )}
+                          </motion.div>
+                        </motion.div>
+                      </div>
                     </div>
-                    <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">
-                      {service.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                      {service.desc}
-                    </p>
-                    <span className={`mt-5 inline-flex items-center gap-2 text-sm font-medium ${serviceIconColors[service.color].text} group-hover:gap-3 transition-all`}>
-                      Learn more <ArrowRight size={14} />
-                    </span>
-                  </div>
-                </Link>
-              </AnimatedSection>
-            ))}
+                  </Link>
+                </AnimatedSection>
+              );
+            })}
           </div>
         </div>
         <div className="relative pb-8">
@@ -241,6 +303,19 @@ export default function Home() {
       <section id="section-workflows" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
         <div className="container relative flex flex-col gap-8">
+          <AnimatedSection>
+            <div className="text-center mb-12">
+              <span className="section-label text-sv-blue/85 mb-4 inline-block text-base [text-shadow:0_1px_3px_rgba(0,0,0,0.12)]">Where we focus</span>
+              <h2 className="font-[Sora] text-2xl sm:text-3xl font-bold uppercase tracking-tight">
+                <span className="gradient-text-blend-dark">Industries And Expertise</span>{" "}
+                <span className="gradient-text-blend">We Specialize In</span>
+              </h2>
+              <p className="mt-3 text-muted-foreground text-sm max-w-md mx-auto">
+                Workflows, marketing, integrations, or custom development for small to medium sized businesses.
+              </p>
+            </div>
+          </AnimatedSection>
+
           {/* Workflows */}
           <Link href="/workflows">
             <AnimatedSection>
@@ -256,7 +331,7 @@ export default function Home() {
                         AI Workflows for Individual Agents & Small Teams
                       </h2>
                       <p className="text-muted-foreground max-w-2xl text-base">
-                        Ready-to-use automation workflows for Insurance, Travel Agents, and Real Estate. Get started quickly — no enterprise setup required.
+                        Ready-to-use automation workflows for Insurance Agents, Travel Agents, and Real Estate Agents. Get started quickly — no enterprise setup required, but our services scale and can provide enterprise-like value.
                       </p>
                     </div>
                   </div>
@@ -349,8 +424,8 @@ export default function Home() {
               <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500 border border-transparent hover:border-indigo-500/20">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                   <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Code className="w-7 h-7 text-indigo-600" />
+                    <div className="w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden p-1.5">
+                      <img src="/Images/Logos/CustomDevelopment_Logo2.png" alt="" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <span className="section-label text-indigo-600/60 mb-2 inline-block">Bespoke Solutions</span>
@@ -407,35 +482,28 @@ export default function Home() {
       </section>
 
       <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
-      {/* ===== CTA SECTION ===== */}
+      {/* ===== CTA SECTION — Treppy-style ===== */}
       <section id="section-cta" className="py-24 lg:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/8 via-transparent to-tv-orange/8" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/5 to-transparent" />
         <div className="container relative">
           <AnimatedSection>
             <div className="text-center max-w-2xl mx-auto">
-              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
-                Ready to Transform Your Business?
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight gradient-text-logo">
+                Elevate your business with SalesVision-Consulting
               </h2>
-              <p className="mt-5 text-muted-foreground text-lg">
-                Let us show you how AI-powered automation can revolutionize your lead generation, streamline your sales process, and accelerate growth.
+              <p className="mt-4 text-lg font-medium text-foreground">
+                AI-powered growth, stress-free
               </p>
-              <div className="mt-10 flex flex-wrap justify-center gap-4">
-                <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
-                    Start Your Journey
-                    <ArrowRight size={16} />
-                  </span>
-                </Link>
-                <a
-                  href="https://portfolio.salesvision-consulting.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-foreground/80 hover:text-foreground border border-border rounded-xl transition-all duration-200 hover:bg-muted/50">
-                    About Me
-                  </span>
-                </a>
-              </div>
+              <Link href="/services">
+                <span className="mt-8 inline-flex items-center gap-2 px-10 py-4 text-base font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/25">
+                  Explore our services
+                  <ArrowRight size={18} />
+                </span>
+              </Link>
+              <p className="mt-6 text-muted-foreground text-sm">
+                Scale leads, workflows, and growth with intelligent automation
+              </p>
             </div>
           </AnimatedSection>
         </div>

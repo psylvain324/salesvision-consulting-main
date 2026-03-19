@@ -18,13 +18,13 @@ import {
 
 const CUSTOM_BG = "/Images/Background_Futuristic_1.jpeg";
 
-const serviceIconColors: Record<string, { bg: string; text: string; dot: string }> = {
-  indigo: { bg: "bg-indigo-500/15", text: "text-indigo-600", dot: "bg-indigo-600" },
-  blue: { bg: "bg-sv-blue/10", text: "text-sv-blue", dot: "bg-sv-blue" },
-  violet: { bg: "bg-violet-500/15", text: "text-violet-600", dot: "bg-violet-600" },
-  emerald: { bg: "bg-emerald-500/15", text: "text-emerald-600", dot: "bg-emerald-600" },
-  orange: { bg: "bg-tv-orange/15", text: "text-tv-orange", dot: "bg-tv-orange" },
-  rose: { bg: "bg-rose-500/15", text: "text-rose-600", dot: "bg-rose-600" },
+const serviceIconColors: Record<string, { bg: string; text: string; dot: string; hover: string }> = {
+  indigo: { bg: "bg-indigo-500/15", text: "text-indigo-600", dot: "bg-indigo-600", hover: "hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/10" },
+  blue: { bg: "bg-sv-blue/10", text: "text-sv-blue", dot: "bg-sv-blue", hover: "hover:border-sv-blue/40 hover:shadow-lg hover:shadow-sv-blue/10" },
+  violet: { bg: "bg-violet-500/15", text: "text-violet-600", dot: "bg-violet-600", hover: "hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10" },
+  emerald: { bg: "bg-emerald-500/15", text: "text-emerald-600", dot: "bg-emerald-600", hover: "hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10" },
+  orange: { bg: "bg-tv-orange/15", text: "text-tv-orange", dot: "bg-tv-orange", hover: "hover:border-tv-orange/40 hover:shadow-lg hover:shadow-tv-orange/10" },
+  rose: { bg: "bg-rose-500/15", text: "text-rose-600", dot: "bg-rose-600", hover: "hover:border-rose-500/40 hover:shadow-lg hover:shadow-rose-500/10" },
 };
 
 const serviceAreas = [
@@ -158,9 +158,11 @@ export default function CustomDevelopment() {
           </AnimatedSection>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {serviceAreas.map((area, i) => (
+            {serviceAreas.map((area, i) => {
+              const colors = serviceIconColors[area.color];
+              return (
               <AnimatedSection key={area.id} delay={i * 0.05}>
-                <div className="rounded-2xl glass-card glass-card-hover p-7 h-full flex flex-col transition-all duration-300">
+                <div className={`rounded-2xl glass-card glass-card-hover p-7 h-full flex flex-col transition-all duration-300 border border-transparent ${colors.hover}`}>
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${serviceIconColors[area.color].bg}`}>
                     <area.icon className={`w-5 h-5 ${serviceIconColors[area.color].text}`} />
                   </div>
@@ -180,7 +182,8 @@ export default function CustomDevelopment() {
                   </ul>
                 </div>
               </AnimatedSection>
-            ))}
+            );
+          })}
           </div>
 
           <AnimatedSection delay={0.3}>
