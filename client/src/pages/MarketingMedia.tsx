@@ -168,7 +168,7 @@ export default function MarketingMedia() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {serviceAreas.map((area, i) => (
               <AnimatedSection key={area.id} delay={i * 0.05}>
-                <div className="rounded-2xl glass-card glass-card-hover p-7 h-full flex flex-col transition-all duration-300">
+                <div id={area.id} className="rounded-2xl glass-card glass-card-hover p-7 h-full flex flex-col transition-all duration-300 scroll-mt-24">
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${serviceIconColors[area.color].bg}`}>
                     <area.icon className={`w-5 h-5 ${serviceIconColors[area.color].text}`} />
                   </div>
@@ -218,7 +218,7 @@ export default function MarketingMedia() {
               </p>
               <div className="mt-10">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Get in Touch <ArrowRight size={16} />
                   </span>
                 </Link>

@@ -15,6 +15,9 @@ import {
   Workflow,
   Zap,
   Target,
+  Brain,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 
 const WORKFLOWS_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663397693691/kUiTSqrNT343A8hDu8MEPH/services-bg-dU46apvAdVMG8nCCTSLxrX.webp";
@@ -139,6 +142,67 @@ export default function Workflows() {
       </section>
 
       <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      {/* ===== CUSTOM AI & AUTOMATION (from former Services overview) ===== */}
+      <section id="section-ai-capabilities" className="py-24 lg:py-32 relative scroll-mt-24">
+        <div className="absolute inset-0 bg-gradient-to-b from-violet-500/[0.03] via-transparent to-transparent" />
+        <div className="container relative">
+          <AnimatedSection>
+            <div className="text-center mb-14 max-w-3xl mx-auto">
+              <span className="section-label text-violet-600/80 mb-4 inline-block">Beyond pre-built packs</span>
+              <h2 className="font-[Sora] text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight gradient-text-logo">
+                Custom AI & automation
+              </h2>
+              <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
+                Industry templates are the fast path — we also design bespoke automations when your process,
+                compliance, or data model needs a tailored fit. That includes LLM-assisted workflows, structured
+                handoffs to your CRM, and guardrails so automation stays on-brand and auditable.
+              </p>
+            </div>
+          </AnimatedSection>
+          <div className="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                icon: Brain,
+                title: "Intelligent routing",
+                desc: "Qualify, score, and route leads with rules plus model-assisted judgment where it helps.",
+              },
+              {
+                icon: Bot,
+                title: "Agent-style tasks",
+                desc: "Multi-step sequences: research, summarize, draft replies, and trigger the next best action.",
+              },
+              {
+                icon: Sparkles,
+                title: "Workflow + stack",
+                desc: "We connect voice, chat, email, and calendars to the same playbook — see Integrations for tools.",
+              },
+            ].map((item, i) => (
+              <AnimatedSection key={item.title} delay={i * 0.06}>
+                <div className="rounded-2xl glass-card glass-card-hover p-7 h-full text-center sm:text-left">
+                  <div className="w-11 h-11 rounded-xl bg-violet-500/15 flex items-center justify-center mb-4 mx-auto sm:mx-0">
+                    <item.icon className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <h3 className="font-[Sora] text-lg font-semibold text-foreground mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+          <AnimatedSection delay={0.2}>
+            <p className="text-center mt-12 text-sm text-muted-foreground">
+              <Link href="/integrations">
+                <span className="text-sv-blue font-medium hover:underline">View tools we integrate</span>
+              </Link>
+              <span className="mx-2">·</span>
+              <Link href="/contact">
+                <span className="text-sv-blue font-medium hover:underline">Discuss a custom build</span>
+              </Link>
+            </p>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
       {/* ===== INDUSTRIES ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
@@ -259,7 +323,7 @@ export default function Workflows() {
               </p>
               <div className="mt-10">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Schedule a Demo <ArrowRight size={16} />
                   </span>
                 </Link>

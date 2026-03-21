@@ -13,14 +13,13 @@ import {
   Target,
   Shield,
   ExternalLink,
-  Workflow,
   Film,
   Megaphone,
   Plug2,
 } from "lucide-react";
 import ScrollDownButton from "@/components/ScrollDownButton";
 
-const HERO_BG = "/Images/CyberCityBackground_1.jpg";
+const HERO_BG = "/Images/Background_Futuristic_2.webp";
 
 /* These will be updated once the standalone sites are published */
 const SALESVISION_URL = "#salesvision";
@@ -42,6 +41,16 @@ const serviceIconColors: Record<string, { bg: string; text: string }> = {
   blue: { bg: "bg-sv-blue/15", text: "text-sv-blue" },
   indigo: { bg: "bg-indigo-500/15", text: "text-indigo-600" },
   rose: { bg: "bg-rose-500/15", text: "text-rose-600" },
+};
+
+/** Iridescent neumorphic CTA tone — matches `sv-neo-btn--*` in index.css */
+const svNeoToneClass: Record<string, string> = {
+  violet: "sv-neo-btn--violet",
+  orange: "sv-neo-btn--orange",
+  emerald: "sv-neo-btn--emerald",
+  blue: "sv-neo-btn--blue",
+  indigo: "sv-neo-btn--indigo",
+  rose: "sv-neo-btn--rose",
 };
 
 const coreServices = [
@@ -69,7 +78,7 @@ const coreServices = [
     title: "Web Design & Development",
     desc: "Modern, responsive websites and web applications built with cutting-edge technology stacks. Fast loading, mobile-first, and designed to convert—whether you need a simple landing page or a full e‑commerce site.",
     color: "emerald" as const,
-    href: "/services#web",
+    href: "/custom-development#web-design",
     imageSrc: "/Images/Logos/Dev1.png",
   },
   {
@@ -78,7 +87,7 @@ const coreServices = [
     title: "Technology Consulting",
     desc: "Strategic guidance on digital transformation, system architecture, and technology adoption. We help you choose the right tools, streamline workflows, and scale your operations without the guesswork.",
     color: "blue" as const,
-    href: "/services#consulting",
+    href: "/integrations#section-consulting",
     imageSrc: "/Images/Logos/Marketing_Logo_5.png",
   },
   {
@@ -87,7 +96,7 @@ const coreServices = [
     title: "Custom Development",
     desc: "Bespoke applications tailored to your unique business requirements and growth objectives. Web apps, APIs, databases, and automation tools—built to fit your workflow and scale as you grow.",
     color: "indigo" as const,
-    href: "/services#software",
+    href: "/custom-development",
     imageSrc: "/Images/Logos/CustomDev_Logo_2.png",
   },
   {
@@ -96,7 +105,7 @@ const coreServices = [
     title: "Video/Audio Editing",
     desc: "Professional video and audio editing for social media—create engaging content that stands out on your channels. Reels, ads, podcasts, and branded content designed to stop the scroll and drive engagement.",
     color: "rose" as const,
-    href: "/services#video",
+    href: "/marketing-media#video-production",
     imageSrc: "/Images/Logos/Audio2.png",
   },
 ];
@@ -156,7 +165,7 @@ export default function Home() {
             </motion.div>
 
             <motion.h1
-              className="font-[Sora] hero-masked-text leading-[1.08] tracking-tight"
+              className="font-[Sora] hero-masked-text hero-masked-text--home leading-[1.08] tracking-tight"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
@@ -185,17 +194,19 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link href="/services">
-                <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-sv-blue to-sv-blue-light hover:opacity-95 rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
-                  Explore Our Services
-                  <ArrowRight size={15} />
-                </span>
+              <Link
+                href="/services"
+                className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl"
+              >
+                Explore Our Services
+                <ArrowRight size={15} />
               </Link>
-              <Link href="/workflows">
-                <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-950 to-purple-900 hover:opacity-95 rounded-xl transition-all duration-200 shadow-lg shadow-purple-950/40">
-                  Explore Workflows
-                  <ArrowRight size={15} />
-                </span>
+              <Link
+                href="/workflows"
+                className="sv-neo-btn sv-neo-btn--purple inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl"
+              >
+                Explore Workflows
+                <ArrowRight size={15} />
               </Link>
             </motion.div>
           </div>
@@ -210,7 +221,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.03] via-purple-500/[0.02] to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-sv-blue/[0.02] to-transparent" />
 
-        <div className="container relative">
+        <div className="w-full max-w-[min(92rem,calc(100vw-1rem))] mx-auto px-3 sm:px-4 lg:px-4 xl:px-5 relative">
           <AnimatedSection>
             <div className="text-center mb-16 lg:mb-20">
               <span className="section-label text-sv-blue/85 mb-4 inline-block text-base [text-shadow:0_1px_3px_rgba(0,0,0,0.12)]">What We Do</span>
@@ -218,31 +229,31 @@ export default function Home() {
                 <span className="gradient-text-blend-dark">Technology Assistance Where</span>{" "}
                 <span className="gradient-text-blend">You Need it</span>
               </h2>
-              <p className="mt-4 text-muted-foreground max-w-[45rem] mx-auto text-lg lg:text-[1.125rem]">
+              <p className="mt-4 text-muted-foreground max-w-[min(52rem,calc(100%-1rem))] mx-auto text-lg lg:text-[1.125rem]">
                 We help small and medium-sized businesses innovate and grow. We also contract into larger projects where our specializations align.
               </p>
             </div>
           </AnimatedSection>
 
-          <div className="space-y-10 lg:space-y-14 max-w-[61rem] mx-auto w-full">
+          <div className="space-y-10 lg:space-y-14 w-full max-w-[74rem] mx-auto lg:px-0">
             {coreServices.map((service, i) => {
               const isEven = i % 2 === 1;
               const IconComponent = service.icon;
               const colors = serviceIconColors[service.color];
               return (
                 <AnimatedSection key={service.title} delay={i * 0.06} className="w-full">
-                  <Link href={service.href} className="block w-full">
+                  <div className="w-full">
                     <div
-                      className={`group flex flex-col gap-8 lg:gap-12 items-center w-full ${
-                        isEven
-                          ? "lg:flex-row-reverse lg:justify-end"
-                          : "lg:flex-row lg:justify-start"
+                      className={`flex flex-col gap-10 items-center w-full justify-center max-w-[69rem] mx-auto lg:gap-24 xl:gap-28 ${
+                        isEven ? "lg:flex-row-reverse" : "lg:flex-row"
                       }`}
                     >
-                      {/* Content block — left-aligned when row is left, right-aligned when row is right */}
+                      {/* Content block — shared max width so label, title, body, CTA align; mirrored for R/L rows */}
                       <div
-                        className={`flex-1 min-w-0 text-center order-2 lg:order-none ${
-                          isEven ? "lg:text-right" : "lg:text-left"
+                        className={`flex-1 min-w-0 w-full max-w-2xl flex flex-col order-2 lg:order-none text-center ${
+                          isEven
+                            ? "lg:text-right lg:items-end"
+                            : "lg:text-left lg:items-start"
                         }`}
                       >
                         <span
@@ -250,24 +261,29 @@ export default function Home() {
                         >
                           {service.label}
                         </span>
-                        <h3 className="font-[Sora] text-xl sm:text-2xl lg:text-[1.6875rem] font-semibold text-foreground mb-3">
+                        <h3 className="font-[Sora] text-[2rem] font-semibold text-foreground mb-3 w-full leading-tight">
                           {service.title}
                         </h3>
-                        <p className="text-muted-foreground text-base lg:text-[1.0625rem] leading-relaxed max-w-2xl lg:max-w-[45rem]">
+                        <p className="text-muted-foreground text-base lg:text-[1.0625rem] leading-relaxed w-full">
                           {service.desc}
                         </p>
-                        <span
-                          className={`mt-5 inline-flex items-center gap-2 text-[0.9375rem] font-medium ${colors.text} group-hover:gap-3 transition-all`}
+                        <Link
+                          href={service.href}
+                          className={`mt-5 inline-flex w-fit mx-auto ${isEven ? "lg:ml-auto lg:mr-0" : "lg:mx-0"}`}
                         >
-                          Learn more <ArrowRight size={14} />
-                        </span>
+                          <span
+                            className={`sv-neo-btn inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl ${svNeoToneClass[service.color]}`}
+                          >
+                            Learn more <ArrowRight size={14} />
+                          </span>
+                        </Link>
                       </div>
 
                       {/* Large icon/image block — partial gradient border on aligned side */}
                       <div className="flex-shrink-0 order-1 lg:order-none">
                         <div className={`service-image-gradient-border ${isEven ? "service-image-gradient-border--left" : "service-image-gradient-border--right"} flex items-center justify-center`}>
                         <motion.div
-                          className={`relative w-72 h-72 sm:w-80 sm:h-80 lg:w-[28rem] lg:h-[28rem] flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}
+                          className="relative w-64 h-64 sm:w-[17.5rem] sm:h-[17.5rem] lg:w-[23.5rem] lg:h-[23.5rem] flex items-center justify-center hover:scale-[1.03] transition-transform duration-300"
                           whileInView={{ opacity: 1, scale: 1 }}
                           initial={{ opacity: 0.7, scale: 0.95 }}
                           viewport={{ once: true, margin: "-50px" }}
@@ -282,7 +298,7 @@ export default function Home() {
                               <img src={service.imageSrc} alt="" className="w-full h-full object-contain" />
                             ) : (
                               <IconComponent
-                                className={`w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ${colors.text}`}
+                                className={`w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 ${colors.text}`}
                                 strokeWidth={1.5}
                               />
                             )}
@@ -291,7 +307,7 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </AnimatedSection>
               );
             })}
@@ -324,8 +340,8 @@ export default function Home() {
               <div className="group rounded-2xl glass-card glass-card-hover p-8 lg:p-10 transition-all duration-500 border border-transparent hover:border-sv-blue/20">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                   <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-xl bg-sv-blue/10 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Workflow className="w-7 h-7 text-sv-blue" />
+                    <div className="w-14 h-14 rounded-xl bg-sv-blue/10 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden p-1.5">
+                      <img src="/Images/Logos/AIAutomation_Logo_1.png" alt="" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <span className="section-label text-sv-blue/60 mb-2 inline-block">Pre-Built for Sales Teams</span>
@@ -345,8 +361,10 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-sv-blue group-hover:gap-3 transition-all">
-                  Explore Workflows <ArrowRight size={14} />
+                <div className="mt-6 pt-6 border-t border-border flex justify-start">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
+                    Explore Workflows <ArrowRight size={14} />
+                  </span>
                 </div>
               </div>
             </AnimatedSection>
@@ -379,8 +397,10 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-tv-orange group-hover:gap-3 transition-all">
-                  Explore Marketing & Media <ArrowRight size={14} />
+                <div className="mt-6 pt-6 border-t border-border flex justify-start">
+                  <span className="sv-neo-btn sv-neo-btn--orange inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
+                    Explore Marketing & Media <ArrowRight size={14} />
+                  </span>
                 </div>
               </div>
             </AnimatedSection>
@@ -413,8 +433,10 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-violet-600 group-hover:gap-3 transition-all">
-                  View Our Stack <ArrowRight size={14} />
+                <div className="mt-6 pt-6 border-t border-border flex justify-start">
+                  <span className="sv-neo-btn sv-neo-btn--violet inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
+                    View Our Stack <ArrowRight size={14} />
+                  </span>
                 </div>
               </div>
             </AnimatedSection>
@@ -447,8 +469,10 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-6 pt-6 border-t border-border flex items-center gap-2 text-sm font-medium text-indigo-600 group-hover:gap-3 transition-all">
-                  Explore Custom Development <ArrowRight size={14} />
+                <div className="mt-6 pt-6 border-t border-border flex justify-start">
+                  <span className="sv-neo-btn sv-neo-btn--indigo inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
+                    Explore Custom Development <ArrowRight size={14} />
+                  </span>
                 </div>
               </div>
             </AnimatedSection>
@@ -497,11 +521,12 @@ export default function Home() {
               <p className="mt-4 text-lg font-medium text-foreground">
                 AI-powered growth, stress-free
               </p>
-              <Link href="/services">
-                <span className="mt-8 inline-flex items-center gap-2 px-10 py-4 text-base font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/25">
-                  Explore our services
-                  <ArrowRight size={18} />
-                </span>
+              <Link
+                href="/services"
+                className="sv-neo-btn sv-neo-btn--blue mt-8 inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl"
+              >
+                Explore our services
+                <ArrowRight size={16} />
               </Link>
               <p className="mt-6 text-muted-foreground text-sm">
                 Scale leads, workflows, and growth with intelligent automation
@@ -554,7 +579,7 @@ export default function Home() {
                         </span>
                       ))}
                     </div>
-                    <span className="inline-flex items-center gap-2 text-sm font-medium text-tv-orange group-hover:gap-3 transition-all">
+                    <span className="sv-neo-btn sv-neo-btn--orange inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
                       Visit SalesVision <ArrowRight size={14} />
                     </span>
                   </div>
@@ -588,7 +613,7 @@ export default function Home() {
                         </span>
                       ))}
                     </div>
-                    <span className="inline-flex items-center gap-2 text-sm font-medium text-sv-blue group-hover:gap-3 transition-all">
+                    <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
                       Visit TravelVision <ArrowRight size={14} />
                     </span>
                   </div>

@@ -16,6 +16,8 @@ import {
   MessageSquare,
   Megaphone,
   BarChart3,
+  LineChart,
+  CheckCircle2,
 } from "lucide-react";
 
 const INTEGRATIONS_BG = "/Images/Background_Futuristic_1.jpeg";
@@ -155,7 +157,65 @@ export default function Integrations() {
           </div>
         </div>
         <div className="relative pb-8">
-          <ScrollDownButton to="section-categories" className="!relative !bottom-0 py-4" />
+          <ScrollDownButton to="section-consulting" className="!relative !bottom-0 py-4" />
+        </div>
+      </section>
+
+      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      {/* ===== TECHNOLOGY CONSULTING (from former Services overview) ===== */}
+      <section id="section-consulting" className="py-24 lg:py-32 relative scroll-mt-24">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.03] to-transparent" />
+        <div className="container relative">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <AnimatedSection>
+              <span className="section-label text-sv-blue/60 mb-4 inline-block">Strategy</span>
+              <h2 className="font-[Sora] text-3xl sm:text-4xl font-bold uppercase tracking-tight gradient-text-logo mb-6">
+                Technology consulting
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-6">
+                Digital transformation is not only about new tools — it is about choosing the right stack,
+                tightening architecture, and sequencing change so your team adopts it. We help SMBs and teams
+                inside larger orgs clarify priorities, reduce tool sprawl, and connect systems so workflows
+                actually run end-to-end.
+              </p>
+              <ul className="space-y-3">
+                {[
+                  "Roadmaps for CRM, automation, and AI aligned to revenue goals",
+                  "Architecture and integration patterns that avoid brittle one-offs",
+                  "Vendor and build-vs-buy guidance with realistic phasing",
+                ].map((line) => (
+                  <li key={line} className="flex gap-3 text-sm text-muted-foreground">
+                    <CheckCircle2 className="w-5 h-5 text-sv-blue shrink-0 mt-0.5" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-8">
+                <Link href="/contact">
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors">
+                    Book a strategy conversation <ArrowRight size={14} />
+                  </span>
+                </Link>
+              </div>
+            </AnimatedSection>
+            <AnimatedSection delay={0.08}>
+              <div className="rounded-2xl glass-card p-8 lg:p-10">
+                <div className="w-12 h-12 rounded-xl bg-sv-blue/10 flex items-center justify-center mb-6">
+                  <LineChart className="w-6 h-6 text-sv-blue" />
+                </div>
+                <h3 className="font-[Sora] text-xl font-semibold text-foreground mb-4">How this ties to the stack below</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  The categories we integrate reflect how we typically implement consulting recommendations —
+                  CRM at the center, automation glue, communications, and measurable marketing loops.
+                </p>
+                <Link href="/workflows">
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-tv-orange hover:underline">
+                    See workflow offerings <ArrowRight size={14} />
+                  </span>
+                </Link>
+              </div>
+            </AnimatedSection>
+          </div>
         </div>
       </section>
 
@@ -221,7 +281,7 @@ export default function Integrations() {
                   </div>
                 </div>
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-6 py-3 text-sm rounded-xl">
                     Ask About Your Stack <ArrowRight size={14} />
                   </span>
                 </Link>
@@ -246,7 +306,7 @@ export default function Integrations() {
               </p>
               <div className="mt-10">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Get in Touch <ArrowRight size={16} />
                   </span>
                 </Link>

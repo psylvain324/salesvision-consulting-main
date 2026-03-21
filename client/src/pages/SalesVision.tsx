@@ -140,7 +140,7 @@ export default function SalesVision() {
               transition={{ duration: 0.7, delay: 0.3 }}
             >
               <Link href="/contact">
-                <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
                   Get Started <ArrowRight size={16} />
                 </span>
               </Link>
@@ -292,7 +292,7 @@ export default function SalesVision() {
               </p>
               <div className="mt-10">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Schedule a Demo <ArrowRight size={16} />
                   </span>
                 </Link>

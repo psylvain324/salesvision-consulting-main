@@ -107,7 +107,7 @@ function LearnArticlePage() {
                     href={encodeURI(article.pdfPath!)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
+                    className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl"
                   >
                     <Download className="w-4 h-4" />
                     Download PDF

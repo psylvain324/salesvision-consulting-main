@@ -249,7 +249,7 @@ export default function TravelVision() {
               transition={{ duration: 0.7, delay: 0.3 }}
             >
               <Link href="/contact">
-                <span className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-tv-orange hover:opacity-90 rounded-xl transition-all duration-200 shadow-lg shadow-tv-orange/20">
+                <span className="sv-neo-btn sv-neo-btn--orange inline-flex items-center gap-2 px-7 py-3.5 text-sm rounded-xl">
                   Plan Your Trip <ArrowRight size={16} />
                 </span>
               </Link>
@@ -370,7 +370,7 @@ export default function TravelVision() {
               </p>
               <div className="mt-10">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-tv-orange hover:opacity-90 rounded-xl transition-all duration-200 shadow-lg shadow-tv-orange/20">
+                  <span className="sv-neo-btn sv-neo-btn--orange inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Get a Quote <ArrowRight size={16} />
                   </span>
                 </Link>

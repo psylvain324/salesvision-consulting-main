@@ -14,6 +14,7 @@ import {
   Cpu,
   Globe,
   Shield,
+  Palette,
 } from "lucide-react";
 
 const CUSTOM_BG = "/Images/Background_Futuristic_1.jpeg";
@@ -28,6 +29,14 @@ const serviceIconColors: Record<string, { bg: string; text: string; dot: string;
 };
 
 const serviceAreas = [
+  {
+    id: "web-design",
+    icon: Palette,
+    color: "blue" as const,
+    title: "Web Design & Front-End",
+    desc: "Brand-led, conversion-focused sites and product UI — responsive layouts, design systems, accessibility, and performance so your first impression matches your offer. Ideal when you need marketing sites, landing pages, or a polished shell on top of custom backends.",
+    features: ["UX & visual design", "Responsive / mobile-first", "Core Web Vitals & SEO-friendly structure", "Design-to-code handoff"],
+  },
   {
     id: "web-apps",
     icon: Globe,
@@ -162,7 +171,10 @@ export default function CustomDevelopment() {
               const colors = serviceIconColors[area.color];
               return (
               <AnimatedSection key={area.id} delay={i * 0.05}>
-                <div className={`rounded-2xl glass-card glass-card-hover p-7 h-full flex flex-col transition-all duration-300 border border-transparent ${colors.hover}`}>
+                <div
+                  id={area.id}
+                  className={`rounded-2xl glass-card glass-card-hover p-7 h-full flex flex-col transition-all duration-300 border border-transparent scroll-mt-24 ${colors.hover}`}
+                >
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${serviceIconColors[area.color].bg}`}>
                     <area.icon className={`w-5 h-5 ${serviceIconColors[area.color].text}`} />
                   </div>
@@ -213,7 +225,7 @@ export default function CustomDevelopment() {
               </p>
               <div className="mt-10">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Start a Project <ArrowRight size={16} />
                   </span>
                 </Link>

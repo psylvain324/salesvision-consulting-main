@@ -110,7 +110,7 @@ export default function Navbar() {
                           <DropdownMenuItem
                             className={location === link.href ? "text-sv-blue bg-sv-blue/5" : ""}
                           >
-                            Overview
+                            Service hub
                           </DropdownMenuItem>
                         </Link>
                         {link.subItems.map((sub) => (
@@ -172,7 +172,7 @@ export default function Navbar() {
                   href="/client-portal"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 text-base font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-all duration-200 shadow-sm shadow-sv-blue/20"
+                  className="sv-neo-btn sv-neo-btn--blue hidden sm:inline-flex items-center gap-2 px-6 py-2.5 text-base rounded-xl"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   Client Portal
@@ -289,7 +289,7 @@ export default function Navbar() {
                     href="/client-portal"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-10 py-3.5 text-lg font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl shadow-sm shadow-sv-blue/20 transition-all duration-200"
+                    className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-10 py-3.5 text-lg rounded-xl"
                   >
                     <LayoutDashboard className="w-5 h-5" />
                     Client Portal

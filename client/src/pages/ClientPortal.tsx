@@ -1,9 +1,9 @@
 /*
  * CLIENT PORTAL: Dashboard-style layout with left sidebar navigation.
- * Sections: Workflows (with config), Settings (profile, bookings), Payment Methods, Membership.
+ * Sections: Workflows (with config), Settings (profile, bookings), Account (payment methods & membership).
  * Placeholder structure for future integration.
  */
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link } from "wouter";
@@ -16,6 +16,7 @@ import {
   CreditCard,
   Crown,
   ChevronRight,
+  ArrowRight,
   Plug2,
   Plus,
   Trash2,
@@ -49,6 +50,33 @@ import {
   CheckCircle2,
   Save,
   Play,
+  Plane,
+  HeartPulse,
+  Building2,
+  Briefcase,
+  MapPin,
+  Bell,
+  ClipboardCheck,
+  Percent,
+  Luggage,
+  KeyRound,
+  PartyPopper,
+  House,
+  FileSignature,
+  Gift,
+  Inbox,
+  Rss,
+  Video,
+  Ship,
+  MessageSquare,
+  Star,
+  Zap,
+  Shield,
+  Database,
+  Search,
+  ArrowUpDown,
+  CircleUser,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -60,6 +88,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,34 +118,427 @@ import {
   type LeadFieldConfigItem,
 } from "@/config/leadFields";
 
-type SectionId = "workflows" | "profile" | "bookings" | "leads" | "integrations" | "marketing" | "payment" | "membership";
+type SectionId =
+  | "workflows"
+  | "profile"
+  | "bookings"
+  | "leads"
+  | "integrations"
+  | "marketing"
+  | "account";
 
-const sidebarSections: { id: SectionId; label: string; icon: typeof Workflow }[] = [
-  { id: "workflows", label: "Workflows", icon: Workflow },
-  { id: "profile", label: "Profile", icon: User },
-  { id: "bookings", label: "Booking Availability", icon: CalendarIcon },
-  { id: "leads", label: "Leads", icon: Users },
-  { id: "integrations", label: "Integrations", icon: Plug2 },
-  { id: "marketing", label: "Marketing Campaigns", icon: Megaphone },
-  { id: "payment", label: "Payment Methods", icon: CreditCard },
-  { id: "membership", label: "Membership", icon: Crown },
+const sidebarSections: {
+  id: SectionId;
+  label: string;
+  icon: typeof Workflow;
+  /** Shows a chevron — section opens a second column (categories / profile tabs). */
+  hasSubmenu?: boolean;
+}[] = [
+  { id: "workflows", label: "Workflows", icon: Workflow, hasSubmenu: true },
+  { id: "profile", label: "Profile", icon: User, hasSubmenu: true },
+  { id: "bookings", label: "Booking", icon: CalendarIcon, hasSubmenu: true },
+  { id: "leads", label: "Leads", icon: Users, hasSubmenu: true },
+  { id: "integrations", label: "Integrations", icon: Plug2, hasSubmenu: true },
+  { id: "marketing", label: "Campaigns", icon: Megaphone, hasSubmenu: true },
+  { id: "account", label: "Account", icon: CircleUser, hasSubmenu: true },
 ];
 
-const workflowTemplates = [
-  { id: "lead-capture", name: "Lead Capture & Qualification", desc: "Gathers web form data, AI-scores leads by behavior, and routes high-value prospects to reps.", icon: UserPlus, iconBg: "bg-emerald-500/10 text-emerald-600" },
-  { id: "basic-qualification-screening", name: "Basic Qualification Screening", desc: "Use website form data or initial import to determine eligibility, follow up unqualified with other options and remove lead, or take pre-configured next step.", icon: CheckCircle2, iconBg: "bg-indigo-500/10 text-indigo-600" },
-  { id: "follow-up", name: "Automated Follow-Up Sequence", desc: "Sends tailored emails or alerts based on interactions or inactivity (e.g., remind to call when prospect opens email twice).", icon: Mail, iconBg: "bg-blue-500/10 text-blue-600" },
-  { id: "pipeline", name: "Pipeline Management Automation", desc: "Auto-updates CRM deal stages from triggers (e.g., contract sent → deal moves to Proposal stage).", icon: GitBranch, iconBg: "bg-violet-500/10 text-violet-600" },
-  { id: "meeting-scheduling", name: "Meeting Scheduling & Prep", desc: "Sends scheduling links to prospects, adds meetings to calendars, and creates agendas automatically.", icon: CalendarDays, iconBg: "bg-amber-500/10 text-amber-600" },
-  { id: "proposal-rfp", name: "Proposal/RFP Generation", desc: "Creates drafted proposals or RFPs from templates pre-filled with customer data.", icon: FileText, iconBg: "bg-slate-500/10 text-slate-600" },
-  { id: "onboarding", name: "Customer Onboarding", desc: "Triggered on deal close; sends welcome messages and initial onboarding steps to new clients.", icon: Handshake, iconBg: "bg-teal-500/10 text-teal-600" },
-  { id: "cold-outreach", name: "Cold Outreach Campaign", desc: "Prospecting sequences; adds leads to cadence and updates based on engagement.", icon: Megaphone, iconBg: "bg-orange-500/10 text-orange-600" },
+/** Workflow library groupings — shown as a second column (sub-nav) next to the main portal menu. */
+type WorkflowCategoryId =
+  | "core"
+  | "health-insurance"
+  | "travel"
+  | "real-estate"
+  | "social-marketing"
+  | "meetings-docs"
+  | "custom";
+
+const workflowCategories: {
+  id: WorkflowCategoryId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "core",
+    label: "Leads & pipeline",
+    shortLabel: "Leads & pipeline",
+    description: "Capture, qualify, route, and nurture opportunities across industries.",
+    icon: Target,
+  },
+  {
+    id: "health-insurance",
+    label: "Health insurance",
+    shortLabel: "Health insurance",
+    description: "Open enrollment, renewals, underwriting, and compliance-friendly follow-ups.",
+    icon: HeartPulse,
+  },
+  {
+    id: "travel",
+    label: "Travel agents",
+    shortLabel: "Travel",
+    description: "Inquiries, quotes, payments, documents, and post-trip re-engagement.",
+    icon: Plane,
+  },
+  {
+    id: "real-estate",
+    label: "Real estate",
+    shortLabel: "Real estate",
+    description: "Listings, showings, transactions, and sphere-of-influence touches.",
+    icon: Building2,
+  },
+  {
+    id: "social-marketing",
+    label: "Social & marketing",
+    shortLabel: "Social & marketing",
+    description: "Outreach, content rhythm, reviews, and campaign nurture.",
+    icon: Share2,
+  },
+  {
+    id: "meetings-docs",
+    label: "Meetings & documents",
+    shortLabel: "Meetings & docs",
+    description: "Scheduling, proposals, and structured onboarding after the win.",
+    icon: Briefcase,
+  },
+  {
+    id: "custom",
+    label: "Request custom",
+    shortLabel: "Custom",
+    description:
+      "Submit a new automation idea, track pending requests, and open workflows built for your account.",
+    icon: Sparkles,
+  },
+];
+
+type WorkflowTemplate = {
+  id: string;
+  name: string;
+  desc: string;
+  icon: LucideIcon;
+  iconBg: string;
+  categoryId: WorkflowCategoryId;
+};
+
+const workflowTemplates: WorkflowTemplate[] = [
+  /* —— Core: leads & pipeline —— */
+  {
+    id: "lead-capture",
+    categoryId: "core",
+    name: "Lead Capture & Qualification",
+    desc: "Gathers web form data, AI-scores leads by behavior, and routes high-value prospects to reps.",
+    icon: UserPlus,
+    iconBg: "bg-emerald-500/10 text-emerald-600",
+  },
+  {
+    id: "basic-qualification-screening",
+    categoryId: "core",
+    name: "Basic Qualification Screening",
+    desc: "Use form or import data to determine fit; branch unqualified leads to alternate paths or remove, then run your next configured step.",
+    icon: CheckCircle2,
+    iconBg: "bg-indigo-500/10 text-indigo-600",
+  },
+  {
+    id: "follow-up",
+    categoryId: "core",
+    name: "Automated Follow-Up Sequence",
+    desc: "Tailored emails or alerts from engagement signals (e.g., nudge rep when prospect opens email twice with no reply).",
+    icon: Mail,
+    iconBg: "bg-blue-500/10 text-blue-600",
+  },
+  {
+    id: "pipeline",
+    categoryId: "core",
+    name: "Pipeline Management Automation",
+    desc: "Auto-advance CRM stages from triggers (e.g., application received → underwriting review).",
+    icon: GitBranch,
+    iconBg: "bg-violet-500/10 text-violet-600",
+  },
+  {
+    id: "core-territory-routing",
+    categoryId: "core",
+    name: "Territory & Product-Line Routing",
+    desc: "Assign leads by ZIP, state, LOB, or round-robin; notify the right producer with context and SLAs.",
+    icon: MapPin,
+    iconBg: "bg-cyan-500/10 text-cyan-600",
+  },
+  {
+    id: "core-no-show-recovery",
+    categoryId: "core",
+    name: "No-Show & Ghost Recovery",
+    desc: "After missed calls or appointments, send reschedule links and internal alerts so opportunities do not go cold.",
+    icon: Bell,
+    iconBg: "bg-rose-500/10 text-rose-600",
+  },
+  /* —— Health insurance —— */
+  {
+    id: "hi-oep-aep-nurture",
+    categoryId: "health-insurance",
+    name: "OEP / AEP Education & Touchpoints",
+    desc: "Seasonal cadence: plan comparison tips, deadline reminders, and consent-aware messaging for Medicare and ACA windows.",
+    icon: CalendarClock,
+    iconBg: "bg-red-500/10 text-red-600",
+  },
+  {
+    id: "hi-renewal-ladder",
+    categoryId: "health-insurance",
+    name: "Policy Renewal Ladder (60 / 30 / 7)",
+    desc: "Automated renewal reminders, rate-change explanations, and tasks for agents to confirm coverage before lapse.",
+    icon: Timer,
+    iconBg: "bg-orange-500/10 text-orange-700",
+  },
+  {
+    id: "hi-underwriting-docs",
+    categoryId: "health-insurance",
+    name: "Underwriting Document Chase",
+    desc: "Track missing apps, HIPAA-safe document requests, and nudge clients until the carrier packet is complete.",
+    icon: ClipboardCheck,
+    iconBg: "bg-emerald-600/10 text-emerald-700",
+  },
+  {
+    id: "hi-quote-expiry",
+    categoryId: "health-insurance",
+    name: "Quote Expiration & Re-Quote",
+    desc: "Alert before quotes expire; offer updated options and book a review call when rates or networks change.",
+    icon: Percent,
+    iconBg: "bg-amber-500/10 text-amber-700",
+  },
+  {
+    id: "hi-appointment-prep",
+    categoryId: "health-insurance",
+    name: "Appointment Prep & Needs Analysis",
+    desc: "Pre-call questionnaire, dependent/coverage summary, and agenda so every consultation is efficient and compliant.",
+    icon: FileText,
+    iconBg: "bg-slate-500/10 text-slate-700",
+  },
+  {
+    id: "hi-cross-sell-nurture",
+    categoryId: "health-insurance",
+    name: "Cross-Line Nurture (Where Licensed)",
+    desc: "Post-enrollment sequences for dental, vision, life, or ancillary—only when rules and licensing allow.",
+    icon: Layers,
+    iconBg: "bg-violet-600/10 text-violet-700",
+  },
+  {
+    id: "hi-referral-thanks",
+    categoryId: "health-insurance",
+    name: "Referral Thank-You & Compliance Log",
+    desc: "Thank referrers, log source-of-business notes for audits, and optional review requests where permitted.",
+    icon: Handshake,
+    iconBg: "bg-teal-600/10 text-teal-700",
+  },
+  /* —— Travel agents —— */
+  {
+    id: "tr-inquiry-qualify",
+    categoryId: "travel",
+    name: "Inquiry Intake & Qualification",
+    desc: "Instant acknowledgment, budget/dates/party-size capture, and route luxury vs. value leads to the right advisor.",
+    icon: Inbox,
+    iconBg: "bg-sky-500/10 text-sky-600",
+  },
+  {
+    id: "tr-quote-followup",
+    categoryId: "travel",
+    name: "Quote Follow-Up (24h / 72h)",
+    desc: "Structured follow-ups after proposals—handle objections, add urgency for holds, and log outcomes in CRM.",
+    icon: Mail,
+    iconBg: "bg-blue-600/10 text-blue-700",
+  },
+  {
+    id: "tr-payment-reminders",
+    categoryId: "travel",
+    name: "Deposit & Final Payment Reminders",
+    desc: "Payment due dates, supplier deadlines, and finance-option nudges so bookings do not cancel for non-payment.",
+    icon: CreditCard,
+    iconBg: "bg-green-600/10 text-green-700",
+  },
+  {
+    id: "tr-predeparture-checklist",
+    categoryId: "travel",
+    name: "Pre-Departure Checklist & Upsells",
+    desc: "Passport/visa reminders, insurance offer, seat selection nudges, and supplier voucher confirmations.",
+    icon: Luggage,
+    iconBg: "bg-indigo-500/10 text-indigo-700",
+  },
+  {
+    id: "tr-post-trip-reengage",
+    categoryId: "travel",
+    name: "Post-Trip Thank-You & Re-Book",
+    desc: "Feedback request, photo/review ask, and anniversary or “where next” campaigns to drive repeat bookings.",
+    icon: PartyPopper,
+    iconBg: "bg-pink-500/10 text-pink-600",
+  },
+  {
+    id: "tr-disruption-alert",
+    categoryId: "travel",
+    name: "Schedule Change & Disruption Alerts",
+    desc: "When carriers update itineraries, draft client messages and tasks for agents to approve and send quickly.",
+    icon: RefreshCw,
+    iconBg: "bg-orange-500/10 text-orange-600",
+  },
+  {
+    id: "tr-group-coordination",
+    categoryId: "travel",
+    name: "Group Travel Coordination",
+    desc: "Rooming lists, per-passenger payment status, and deadline blasts for weddings, reunions, and corporate retreats.",
+    icon: Users,
+    iconBg: "bg-purple-500/10 text-purple-600",
+  },
+  {
+    id: "tr-cruise-docs",
+    categoryId: "travel",
+    name: "Cruise & Tour Document Packet",
+    desc: "Gather passport copies, dining preferences, and emergency contacts; send sailing-day reminders and port tips.",
+    icon: Ship,
+    iconBg: "bg-cyan-600/10 text-cyan-700",
+  },
+  /* —— Real estate —— */
+  {
+    id: "re-new-listing-alerts",
+    categoryId: "real-estate",
+    name: "New Listing & Price-Drop Alerts",
+    desc: "Notify matched buyers and your sphere when listings hit the market or improve—personalized with search criteria.",
+    icon: House,
+    iconBg: "bg-emerald-500/10 text-emerald-700",
+  },
+  {
+    id: "re-open-house-followup",
+    categoryId: "real-estate",
+    name: "Open House Visitor Follow-Up",
+    desc: "Same-day thank-you, listing recap, and nurture track for hot vs. casual visitors with CRM tagging.",
+    icon: CalendarDays,
+    iconBg: "bg-amber-500/10 text-amber-700",
+  },
+  {
+    id: "re-showing-feedback",
+    categoryId: "real-estate",
+    name: "Showing Feedback Requests",
+    desc: "Prompt buyer agents for feedback after showings; aggregate insights for sellers and price conversations.",
+    icon: MessageSquare,
+    iconBg: "bg-violet-500/10 text-violet-700",
+  },
+  {
+    id: "re-contract-milestones",
+    categoryId: "real-estate",
+    name: "Under-Contract Milestone Checklist",
+    desc: "Inspection, appraisal, financing, and closing reminders for buyers, sellers, and cooperating brokers.",
+    icon: FileSignature,
+    iconBg: "bg-slate-600/10 text-slate-700",
+  },
+  {
+    id: "re-past-client-checkin",
+    categoryId: "real-estate",
+    name: "Past Client & SOI Check-Ins",
+    desc: "Home-iversary notes, market snapshots, and referral prompts timed to stay top of mind without spamming.",
+    icon: Gift,
+    iconBg: "bg-rose-500/10 text-rose-700",
+  },
+  {
+    id: "re-expired-listing-outreach",
+    categoryId: "real-estate",
+    name: "Expired / FSBO Nurture (Compliant)",
+    desc: "Respectful multi-touch outreach with opt-out; positions your value prop and invites a listing conversation.",
+    icon: Target,
+    iconBg: "bg-orange-600/10 text-orange-700",
+  },
+  {
+    id: "re-lead-response-sla",
+    categoryId: "real-estate",
+    name: "Portal & IDX Lead Speed-to-Lead",
+    desc: "Sub-minute alerts, auto-text/email first touch, and manager escalation if no response within your SLA.",
+    icon: Zap,
+    iconBg: "bg-yellow-500/10 text-yellow-700",
+  },
+  /* —— Social & marketing —— */
+  {
+    id: "cold-outreach",
+    categoryId: "social-marketing",
+    name: "Cold Outreach Campaign",
+    desc: "Prospecting cadences across email and social; pause on reply and sync outcomes to CRM.",
+    icon: Megaphone,
+    iconBg: "bg-orange-500/10 text-orange-600",
+  },
+  {
+    id: "sm-content-calendar",
+    categoryId: "social-marketing",
+    name: "Content Calendar & Approvals",
+    desc: "Remind creators of posting windows, route drafts for approval, and sync published links to CRM or ads.",
+    icon: CalendarDays,
+    iconBg: "bg-fuchsia-500/10 text-fuchsia-600",
+  },
+  {
+    id: "sm-dm-comment-sla",
+    categoryId: "social-marketing",
+    name: "DM & Comment SLA Alerts",
+    desc: "Route social engagement to on-call reps with timers so leads from Instagram, Facebook, or LinkedIn do not stall.",
+    icon: MessageSquare,
+    iconBg: "bg-blue-500/10 text-blue-600",
+  },
+  {
+    id: "sm-review-requests",
+    categoryId: "social-marketing",
+    name: "Review & Testimonial Requests",
+    desc: "Trigger after positive milestones (closed deal, returned trip, policy active) with platform-specific links.",
+    icon: Star,
+    iconBg: "bg-amber-400/10 text-amber-600",
+  },
+  {
+    id: "sm-lead-magnet-nurture",
+    categoryId: "social-marketing",
+    name: "Lead Magnet → Email Nurture",
+    desc: "Deliver the asset, then a short educational series that warms the lead for a booking or consultation.",
+    icon: Download,
+    iconBg: "bg-emerald-500/10 text-emerald-600",
+  },
+  {
+    id: "sm-webinar-event",
+    categoryId: "social-marketing",
+    name: "Webinar & Event Reminders",
+    desc: "Registration confirmations, day-before and hour-of pings, plus no-show replay or reschedule flow.",
+    icon: Video,
+    iconBg: "bg-red-500/10 text-red-600",
+  },
+  {
+    id: "sm-ugc-mentions",
+    categoryId: "social-marketing",
+    name: "UGC & Mention Digest",
+    desc: "Weekly digest of tags and branded hashtags; create tasks to engage, reshare, or add followers to nurture.",
+    icon: Rss,
+    iconBg: "bg-indigo-500/10 text-indigo-600",
+  },
+  /* —— Meetings & documents —— */
+  {
+    id: "meeting-scheduling",
+    categoryId: "meetings-docs",
+    name: "Meeting Scheduling & Prep",
+    desc: "Scheduling links, calendar holds, and auto-generated agendas pulled from CRM context.",
+    icon: CalendarDays,
+    iconBg: "bg-amber-500/10 text-amber-600",
+  },
+  {
+    id: "proposal-rfp",
+    categoryId: "meetings-docs",
+    name: "Proposal / RFP Generation",
+    desc: "Template-driven proposals or carrier comparisons pre-filled from discovery notes.",
+    icon: FileText,
+    iconBg: "bg-slate-500/10 text-slate-600",
+  },
+  {
+    id: "onboarding",
+    categoryId: "meetings-docs",
+    name: "Customer Onboarding",
+    desc: "Post-close welcome packs, e-signature follow-through, and first-30-day task lists.",
+    icon: Handshake,
+    iconBg: "bg-teal-500/10 text-teal-600",
+  },
 ];
 
 const AUTH_STORAGE_KEY = "client-portal-auth";
 const STORAGE_KEYS = {
   profile: "client-portal-profile",
   bookings: "client-portal-bookings",
+  bookingAppointments: "client-portal-booking-appointments",
   bookingsCalendarConfig: "client-portal-bookings-calendar-config",
   workflow: (id: string) => `client-portal-workflow-${id}`,
   campaigns: "client-portal-campaigns",
@@ -124,7 +546,82 @@ const STORAGE_KEYS = {
   membership: "client-portal-membership",
   leadFieldsConfig: "client-portal-lead-fields-config",
   importMappings: "client-portal-import-mappings",
+  customWorkflowRequests: "client-portal-custom-workflow-requests",
+  customWorkflowsBuilt: "client-portal-custom-workflows-built",
+  leads: "client-portal-leads",
+  crmLastSync: "client-portal-crm-last-sync",
 } as const;
+
+type CustomWorkflowRequestStored = {
+  id: string;
+  notes: string;
+  submittedAt: string;
+  status: "pending" | "fulfilled";
+};
+
+type CustomWorkflowBuiltStored = {
+  id: string;
+  name: string;
+  desc: string;
+  addedAt: string;
+  sourceRequestId?: string;
+};
+
+function loadCustomRequests(): CustomWorkflowRequestStored[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.customWorkflowRequests);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as unknown[];
+    if (!Array.isArray(list)) return [];
+    return list.map((item: Record<string, unknown>) => ({
+      id: String(item.id ?? crypto.randomUUID()),
+      notes: String(item.notes ?? ""),
+      submittedAt: String(item.submittedAt ?? item.at ?? new Date().toISOString()),
+      status: item.status === "fulfilled" ? ("fulfilled" as const) : ("pending" as const),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomRequests(next: CustomWorkflowRequestStored[]) {
+  localStorage.setItem(STORAGE_KEYS.customWorkflowRequests, JSON.stringify(next));
+}
+
+function loadBuiltWorkflows(): CustomWorkflowBuiltStored[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.customWorkflowsBuilt);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as unknown[];
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter((x): x is Record<string, unknown> => x !== null && typeof x === "object")
+      .map((item) => ({
+        id: String(item.id ?? crypto.randomUUID()),
+        name: String(item.name ?? "Custom workflow"),
+        desc: String(item.desc ?? ""),
+        addedAt: String(item.addedAt ?? new Date().toISOString()),
+        sourceRequestId: item.sourceRequestId ? String(item.sourceRequestId) : undefined,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function saveBuiltWorkflows(next: CustomWorkflowBuiltStored[]) {
+  localStorage.setItem(STORAGE_KEYS.customWorkflowsBuilt, JSON.stringify(next));
+}
+
+function builtEntryToTemplate(b: CustomWorkflowBuiltStored): WorkflowTemplate {
+  return {
+    id: b.id,
+    name: b.name,
+    desc: b.desc,
+    icon: Sparkles,
+    iconBg: "bg-violet-500/10 text-violet-600",
+    categoryId: "custom",
+  };
+}
 
 const CALENDAR_APPS = [
   { id: "google-calendar", label: "Google Calendar" },
@@ -268,71 +765,6 @@ export default function ClientPortal() {
       </div>
     );
   }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500 text-sm">Loading...</div>
-      </div>
-    );
-  }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500 text-sm">Loading...</div>
-      </div>
-    );
-  }
-
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500 text-sm">Loading...</div>
-      </div>
-    );
-  }
-
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <span className="text-sm text-gray-500">Loading...</span>
-      </div>
-    );
-  }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500 text-sm">Loading...</div>
-      </div>
-    );
-  }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <span className="text-gray-500">Loading...</span>
-      </div>
-    );
-  }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-pulse text-gray-500">Loading...</div>
-      </div>
-    );
-  }
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <span className="text-sm text-gray-500">Loading...</span>
-      </div>
-    );
-  }
   if (!isAuthenticated) {
     return (
       <ClientPortalLogin
@@ -370,8 +802,8 @@ export default function ClientPortal() {
 
       <div className="flex flex-col lg:flex-row min-h-screen pt-16">
         {/* Left Sidebar */}
-        <aside className="w-full lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200 bg-white">
-          <nav className="p-4 space-y-1">
+        <aside className="w-full lg:w-[13.5rem] shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200 bg-white">
+          <nav className="p-3 space-y-0.5">
             {sidebarSections.map((section) => (
               <button
                 key={section.id}
@@ -380,21 +812,29 @@ export default function ClientPortal() {
                   setActiveSection(section.id);
                   if (section.id !== "workflows") setSelectedWorkflow(null);
                 }}
-                className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-left text-sm font-medium transition-colors ${
                   activeSection === section.id
                     ? "bg-sv-blue/10 text-sv-blue"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                <section.icon className="w-5 h-5 shrink-0" />
-                {section.label}
+                <section.icon className="w-[1.125rem] h-[1.125rem] shrink-0" />
+                <span className="flex-1 min-w-0 truncate">{section.label}</span>
+                {section.hasSubmenu ? (
+                  <ChevronRight
+                    className={`w-4 h-4 shrink-0 opacity-45 ${
+                      activeSection === section.id ? "text-sv-blue opacity-70" : "text-gray-400"
+                    }`}
+                    aria-hidden
+                  />
+                ) : null}
               </button>
             ))}
           </nav>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 p-5 sm:p-6 lg:pl-8 lg:pr-10 lg:py-7 overflow-auto min-w-0">
           {activeSection === "workflows" && (
             <WorkflowsContent
               selectedWorkflow={selectedWorkflow}
@@ -416,14 +856,388 @@ export default function ClientPortal() {
             <BookingsContent onNavigateToSection={setActiveSection} />
           )}
           {activeSection === "leads" && (
-            <LeadsContent profileJob={profileJob} profileRole={profileRole} />
+            <LeadsContent
+              profileJob={profileJob}
+              profileRole={profileRole}
+              profileIndustry={profileIndustry}
+              onNavigateToSection={setActiveSection}
+            />
           )}
           {activeSection === "integrations" && <IntegrationsContent />}
           {activeSection === "marketing" && <MarketingCampaignsContent />}
-          {activeSection === "payment" && <PaymentContent />}
-          {activeSection === "membership" && <MembershipContent />}
+          {activeSection === "account" && <AccountContent />}
         </main>
       </div>
+    </div>
+  );
+}
+
+type CustomWorkflowSubView = "new" | "pending" | "library";
+
+function CustomWorkflowSubPanels({
+  activeSubView,
+  setActiveSubView,
+  onSelectWorkflow,
+  dataRevision,
+  bumpData,
+}: {
+  activeSubView: CustomWorkflowSubView;
+  setActiveSubView: (v: CustomWorkflowSubView) => void;
+  onSelectWorkflow: (id: string) => void;
+  dataRevision: number;
+  bumpData: () => void;
+}) {
+  const [notes, setNotes] = useState("");
+  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [fulfillForId, setFulfillForId] = useState<string | null>(null);
+  const [fulfillName, setFulfillName] = useState("");
+  const [fulfillDesc, setFulfillDesc] = useState("");
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [manualDesc, setManualDesc] = useState("");
+
+  const allRequests = useMemo(() => loadCustomRequests(), [dataRevision]);
+  const pendingList = useMemo(() => allRequests.filter((r) => r.status === "pending"), [allRequests]);
+  const builtList = useMemo(() => loadBuiltWorkflows(), [dataRevision]);
+
+  const openFulfill = (req: CustomWorkflowRequestStored) => {
+    setFulfillForId(req.id);
+    setFulfillName(`Custom: ${req.notes.slice(0, 48)}${req.notes.length > 48 ? "…" : ""}`);
+    setFulfillDesc(req.notes);
+  };
+
+  const submitNewRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = notes.trim();
+    if (!trimmed) return;
+    const next = [
+      ...loadCustomRequests(),
+      {
+        id: crypto.randomUUID(),
+        notes: trimmed,
+        submittedAt: new Date().toISOString(),
+        status: "pending" as const,
+      },
+    ];
+    saveCustomRequests(next);
+    setNotes("");
+    setJustSubmitted(true);
+    setTimeout(() => setJustSubmitted(false), 5000);
+    bumpData();
+    setActiveSubView("pending");
+  };
+
+  const withdrawRequest = (id: string) => {
+    saveCustomRequests(loadCustomRequests().filter((r) => r.id !== id));
+    bumpData();
+  };
+
+  const confirmFulfill = () => {
+    if (!fulfillForId || !fulfillName.trim()) return;
+    const built = loadBuiltWorkflows();
+    const newEntry: CustomWorkflowBuiltStored = {
+      id: `custom-${crypto.randomUUID()}`,
+      name: fulfillName.trim(),
+      desc: fulfillDesc.trim() || "Custom workflow",
+      addedAt: new Date().toISOString(),
+      sourceRequestId: fulfillForId,
+    };
+    saveBuiltWorkflows([...built, newEntry]);
+    saveCustomRequests(
+      loadCustomRequests().map((r) =>
+        r.id === fulfillForId ? { ...r, status: "fulfilled" as const } : r
+      )
+    );
+    setFulfillForId(null);
+    setFulfillName("");
+    setFulfillDesc("");
+    bumpData();
+    setActiveSubView("library");
+  };
+
+  const confirmManualAdd = () => {
+    if (!manualName.trim()) return;
+    const built = loadBuiltWorkflows();
+    saveBuiltWorkflows([
+      ...built,
+      {
+        id: `custom-${crypto.randomUUID()}`,
+        name: manualName.trim(),
+        desc: manualDesc.trim() || "Custom workflow",
+        addedAt: new Date().toISOString(),
+      },
+    ]);
+    setManualOpen(false);
+    setManualName("");
+    setManualDesc("");
+    bumpData();
+  };
+
+  const removeBuilt = (id: string) => {
+    saveBuiltWorkflows(loadBuiltWorkflows().filter((b) => b.id !== id));
+    bumpData();
+  };
+
+  const tabs: { id: CustomWorkflowSubView; label: string; icon: LucideIcon; count?: number }[] = [
+    { id: "new", label: "New request", icon: Sparkles },
+    { id: "pending", label: "Pending", icon: Clock, count: pendingList.length },
+    { id: "library", label: "My custom workflows", icon: Workflow, count: builtList.length },
+  ];
+
+  return (
+    <div className="max-w-5xl">
+      <div
+        role="tablist"
+        aria-label="Custom workflow views"
+        className="flex flex-wrap gap-2 mb-6 p-1 rounded-xl bg-gray-100/80 border border-gray-200/80"
+      >
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const selected = activeSubView === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => setActiveSubView(tab.id)}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                selected
+                  ? "bg-white text-sv-blue shadow-sm border border-gray-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white/60"
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              {tab.label}
+              {tab.count !== undefined && tab.count > 0 ? (
+                <span className="text-[10px] font-semibold tabular-nums bg-violet-100 text-violet-800 px-1.5 py-0.5 rounded-md">
+                  {tab.count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeSubView === "new" && (
+        <section
+          className="rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/90 via-white to-sv-blue/[0.04] p-6 sm:p-8 shadow-sm shadow-violet-500/5"
+          aria-labelledby="custom-workflow-heading"
+        >
+          <h2 id="custom-workflow-heading" className="font-[Sora] text-lg sm:text-xl font-bold text-gray-900 mb-2">
+            Make a request
+          </h2>
+          <p className="text-sm text-gray-600 mb-5 leading-relaxed">
+            Describe triggers, systems (CRM, email, calendar, etc.), and outcomes. We&apos;ll review and follow up.
+            Include your email in the text if you need a reply before the portal is fully integrated.
+          </p>
+          <form onSubmit={submitNewRequest} className="space-y-4">
+            <div>
+              <Label htmlFor="custom-workflow-notes" className="text-gray-700">
+                What should this automation do?
+              </Label>
+              <Textarea
+                id="custom-workflow-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Example: When a lead books a cruise deposit in Cal.com, create a Pipedrive deal, send a branded PDF checklist, and remind me 7 days before final payment…"
+                rows={5}
+                className="mt-2 resize-y min-h-[120px] border-gray-200 text-sm"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <Button
+                type="submit"
+                disabled={!notes.trim()}
+                className="w-full sm:w-auto bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                Submit request
+              </Button>
+              <Link href="/contact">
+                <span className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-medium text-sv-blue hover:text-violet-700 transition-colors">
+                  Or contact us directly
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Link>
+            </div>
+            {justSubmitted && (
+              <p className="text-sm text-emerald-700 flex items-center gap-2" role="status">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                Request added to Pending.
+              </p>
+            )}
+          </form>
+        </section>
+      )}
+
+      {activeSubView === "pending" && (
+        <div className="space-y-4">
+          {pendingList.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+              No pending requests. Use <strong className="text-gray-700">New request</strong> to describe an automation
+              you&apos;d like built.
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {pendingList.map((req) => (
+                <li
+                  key={req.id}
+                  className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400 mb-1">
+                      Submitted {new Date(req.submittedAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{req.notes}</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                    <Button type="button" variant="outline" size="sm" onClick={() => openFulfill(req)}>
+                      I received my workflow
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => withdrawRequest(req.id)}>
+                      Withdraw
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {activeSubView === "library" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-gray-600">
+              Workflows built for you appear here. Open one to configure triggers and actions (stored per browser).
+            </p>
+            <Button type="button" size="sm" variant="outline" onClick={() => setManualOpen(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add manually
+            </Button>
+          </div>
+          {builtList.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+              No custom workflows yet. When we deliver your build, use{" "}
+              <strong className="text-gray-700">I received my workflow</strong> on a pending request, or{" "}
+              <strong className="text-gray-700">Add manually</strong> if it was set up outside the request flow.
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {builtList.map((b) => (
+                <div
+                  key={b.id}
+                  className="flex items-start gap-4 p-5 rounded-xl border border-gray-200 bg-white text-left"
+                >
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center bg-violet-500/10 text-violet-600">
+                    <Sparkles className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-violet-700/80 mb-1 block">
+                      Custom
+                    </span>
+                    <h3 className="font-semibold text-gray-900 text-sm leading-tight">{b.name}</h3>
+                    <p className="text-xs text-gray-500 mt-1.5 line-clamp-3">{b.desc}</p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <Button type="button" size="sm" className="text-xs" onClick={() => onSelectWorkflow(b.id)}>
+                        Configure
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs text-red-600 hover:text-red-700"
+                        onClick={() => removeBuilt(b.id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <Dialog open={!!fulfillForId} onOpenChange={(o) => !o && setFulfillForId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add to my workflows</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">
+            Name and describe the workflow we delivered. You can edit these before saving.
+          </p>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label htmlFor="fulfill-name">Name</Label>
+              <Input
+                id="fulfill-name"
+                value={fulfillName}
+                onChange={(e) => setFulfillName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="fulfill-desc">Description</Label>
+              <Textarea
+                id="fulfill-desc"
+                value={fulfillDesc}
+                onChange={(e) => setFulfillDesc(e.target.value)}
+                rows={4}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setFulfillForId(null)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmFulfill} disabled={!fulfillName.trim()}>
+              Save to my workflows
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add custom workflow</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">Use this if a workflow was set up for you outside the request queue.</p>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label htmlFor="manual-name">Name</Label>
+              <Input
+                id="manual-name"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="e.g. Open house follow-up bot"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="manual-desc">Description</Label>
+              <Textarea
+                id="manual-desc"
+                value={manualDesc}
+                onChange={(e) => setManualDesc(e.target.value)}
+                rows={3}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setManualOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmManualAdd} disabled={!manualName.trim()}>
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -437,50 +1251,214 @@ function WorkflowsContent({
   onSelectWorkflow: (id: string) => void;
   onBack: () => void;
 }) {
+  const [activeCategory, setActiveCategory] = useState<WorkflowCategoryId | "all">("all");
+  const [customSubView, setCustomSubView] = useState<CustomWorkflowSubView>("new");
+  const [customDataRevision, setCustomDataRevision] = useState(0);
+  const bumpCustomData = () => setCustomDataRevision((n) => n + 1);
+
+  const selectedTemplate = useMemo(() => {
+    if (!selectedWorkflow) return undefined;
+    const fromLibrary = workflowTemplates.find((w) => w.id === selectedWorkflow);
+    if (fromLibrary) return fromLibrary;
+    const built = loadBuiltWorkflows().find((b) => b.id === selectedWorkflow);
+    return built ? builtEntryToTemplate(built) : undefined;
+  }, [selectedWorkflow, customDataRevision]);
+
+  const categoryMeta = selectedTemplate
+    ? workflowCategories.find((c) => c.id === selectedTemplate.categoryId)
+    : undefined;
+
+  const customCategoryCount = useMemo(() => {
+    const pending = loadCustomRequests().filter((r) => r.status === "pending").length;
+    return pending + loadBuiltWorkflows().length;
+  }, [customDataRevision]);
+
+  const filteredWorkflows =
+    activeCategory === "all"
+      ? workflowTemplates
+      : activeCategory === "custom"
+        ? []
+        : workflowTemplates.filter((w) => w.categoryId === activeCategory);
+
   if (selectedWorkflow) {
-    const workflow = workflowTemplates.find((w) => w.id === selectedWorkflow);
     return (
-      <WorkflowConfig
-        workflow={workflow}
-        onBack={onBack}
-      />
+      <div className="max-w-4xl">
+        <nav
+          className="flex flex-wrap items-center gap-1 text-sm text-gray-500 mb-6"
+          aria-label="Breadcrumb"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedTemplate?.categoryId === "custom") {
+                setActiveCategory("custom");
+              } else {
+                setActiveCategory("all");
+              }
+              onBack();
+            }}
+            className="hover:text-sv-blue transition-colors"
+          >
+            Workflows
+          </button>
+          <ChevronRight className="w-4 h-4 shrink-0 text-gray-300" aria-hidden />
+          {categoryMeta && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveCategory(categoryMeta.id);
+                  onBack();
+                }}
+                className="hover:text-sv-blue transition-colors max-w-[12rem] truncate text-left"
+              >
+                {categoryMeta.shortLabel}
+              </button>
+              <ChevronRight className="w-4 h-4 shrink-0 text-gray-300" aria-hidden />
+            </>
+          )}
+          <span className="text-gray-900 font-medium truncate max-w-[min(100%,16rem)] sm:max-w-md">
+            {selectedTemplate?.name ?? "Workflow"}
+          </span>
+        </nav>
+        <WorkflowConfig workflow={selectedTemplate} onBack={onBack} />
+      </div>
     );
   }
 
-  return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Workflows</h1>
-      <p className="text-gray-600 mb-8">
-        Select a workflow to configure. Each workflow can be customized to your needs.
+  const CategoryNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
+        Categories
       </p>
-
-      <div className="grid sm:grid-cols-2 gap-5 max-w-6xl">
-        {workflowTemplates.map((workflow) => {
-          const IconComponent = workflow.icon;
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        <button
+          type="button"
+          onClick={() => setActiveCategory("all")}
+          className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+            activeCategory === "all"
+              ? "bg-sv-blue/10 text-sv-blue"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          }`}
+        >
+          <LayoutGrid className="w-4 h-4 shrink-0 opacity-80" />
+          All workflows
+          <span className="ml-auto text-xs text-gray-400 font-normal hidden lg:inline">
+            {workflowTemplates.length}
+          </span>
+        </button>
+        {workflowCategories.map((cat) => {
+          const count =
+            cat.id === "custom"
+              ? customCategoryCount
+              : workflowTemplates.filter((w) => w.categoryId === cat.id).length;
+          const Icon = cat.icon;
           return (
             <button
-              key={workflow.id}
+              key={cat.id}
               type="button"
-              onClick={() => onSelectWorkflow(workflow.id)}
-              className="flex items-start gap-4 p-6 rounded-xl border border-gray-200 bg-white text-left hover:border-sv-blue/40 hover:shadow-lg hover:shadow-sv-blue/5 transition-all duration-200 group"
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeCategory === cat.id
+                  ? "bg-sv-blue/10 text-sv-blue"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
             >
-              <div
-                className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${workflow.iconBg} transition-transform group-hover:scale-105`}
-              >
-                <IconComponent className="w-6 h-6" strokeWidth={2} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 group-hover:text-sv-blue transition-colors text-base leading-tight">
-                  {workflow.name}
-                </h3>
-                <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                  {workflow.desc}
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-sv-blue shrink-0 mt-1 transition-colors" />
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{cat.shortLabel}</span>
+              <span className="hidden lg:inline">{cat.label}</span>
+              <span className="ml-auto text-xs text-gray-400 font-normal tabular-nums">{count}</span>
             </button>
           );
         })}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      {/* Secondary nav — to the right of the main portal sidebar (breadcrumb-style grouping) */}
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {CategoryNav}
+      </aside>
+
+      <div className="flex-1 min-w-0">
+        <nav className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3" aria-hidden>
+          <span>Workflows</span>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-gray-600">
+            {activeCategory === "all" ? "All categories" : workflowCategories.find((c) => c.id === activeCategory)?.label}
+          </span>
+          {activeCategory === "custom" ? (
+            <>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-gray-600">
+                {customSubView === "new" && "New request"}
+                {customSubView === "pending" && "Pending"}
+                {customSubView === "library" && "My custom workflows"}
+              </span>
+            </>
+          ) : null}
+        </nav>
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Workflows</h1>
+        <p className="text-gray-600 mb-2 max-w-2xl">
+          {activeCategory === "all"
+            ? "Browse every automation template. Pick a category on the left to focus on your industry or use case."
+            : workflowCategories.find((c) => c.id === activeCategory)?.description}
+        </p>
+        {activeCategory !== "custom" ? (
+          <p className="text-sm text-gray-500 mb-6">
+            Showing {filteredWorkflows.length} workflow{filteredWorkflows.length === 1 ? "" : "s"}
+            {activeCategory !== "all" ? ` in ${workflowCategories.find((c) => c.id === activeCategory)?.label}` : ""}.
+          </p>
+        ) : (
+          <p className="text-sm text-gray-500 mb-6">
+            New requests, pending intake, and workflows already on your account.
+          </p>
+        )}
+
+        {activeCategory === "custom" ? (
+          <CustomWorkflowSubPanels
+            activeSubView={customSubView}
+            setActiveSubView={setCustomSubView}
+            onSelectWorkflow={onSelectWorkflow}
+            dataRevision={customDataRevision}
+            bumpData={bumpCustomData}
+          />
+        ) : (
+          <div className="grid sm:grid-cols-2 xl:grid-cols-2 gap-4 max-w-5xl">
+            {filteredWorkflows.map((workflow) => {
+              const IconComponent = workflow.icon;
+              const cat = workflowCategories.find((c) => c.id === workflow.categoryId);
+              return (
+                <button
+                  key={workflow.id}
+                  type="button"
+                  onClick={() => onSelectWorkflow(workflow.id)}
+                  className="flex items-start gap-4 p-5 rounded-xl border border-gray-200 bg-white text-left hover:border-sv-blue/40 hover:shadow-lg hover:shadow-sv-blue/5 transition-all duration-200 group"
+                >
+                  <div
+                    className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center ${workflow.iconBg} transition-transform group-hover:scale-105`}
+                  >
+                    <IconComponent className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {cat && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-sv-blue/70 mb-1 block">
+                        {cat.shortLabel}
+                      </span>
+                    )}
+                    <h3 className="font-semibold text-gray-900 group-hover:text-sv-blue transition-colors text-sm leading-tight">
+                      {workflow.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1.5 leading-relaxed line-clamp-3">{workflow.desc}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-sv-blue shrink-0 mt-1 transition-colors" />
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -508,7 +1486,7 @@ function WorkflowConfig({
   workflow,
   onBack,
 }: {
-  workflow: (typeof workflowTemplates)[number] | undefined;
+  workflow: WorkflowTemplate | undefined;
   onBack: () => void;
 }) {
   const storageKey = STORAGE_KEYS.workflow(workflow?.id ?? "default");
@@ -757,7 +1735,7 @@ function WorkflowConfig({
             <button
               type="button"
               onClick={handleSaveConfig}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl"
             >
               <Save className="w-4 h-4" />
               Save configuration
@@ -837,6 +1815,84 @@ const LEAD_QUANTITY_OPTIONS = [50, 100, 250, 500] as const;
 const LEAD_QUALITY_OPTIONS = ["Low", "Medium", "High"] as const;
 const LEAD_VETTED_OPTIONS = ["Vetted", "Non-Vetted"] as const;
 const LEAD_OUTPUT_OPTIONS = ["CSV", "Excel (.xlsx)"] as const;
+
+type LeadSubSectionId = "grid" | "generate" | "import" | "crm";
+
+const leadSubSections: {
+  id: LeadSubSectionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "grid",
+    label: "Grid",
+    shortLabel: "Grid",
+    description:
+      "Full lead table with search, filters, sortable columns, and visible columns. Add rows manually or use grouped view.",
+    icon: LayoutGrid,
+  },
+  {
+    id: "generate",
+    label: "Generate",
+    shortLabel: "Gen",
+    description:
+      "Build prospect lists from profile context and options; download or add results to your grid (demo / placeholder flow).",
+    icon: Sparkles,
+  },
+  {
+    id: "import",
+    label: "Import",
+    shortLabel: "Import",
+    description: "CSV import with UTF-8 guidance, append vs replace, duplicate skipping, and optional email validation.",
+    icon: Upload,
+  },
+  {
+    id: "crm",
+    label: "CRM sync",
+    shortLabel: "CRM",
+    description: "Configure push/pull, conflict rules, scope, and connect from Integrations when your CRM is wired up.",
+    icon: RefreshCw,
+  },
+];
+
+function loadStoredLeads(): Lead[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.leads);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as unknown;
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter((x): x is Record<string, unknown> => x !== null && typeof x === "object")
+      .map((x) => ({
+        id: String(x.id ?? crypto.randomUUID()),
+        name: String(x.name ?? ""),
+        email: String(x.email ?? ""),
+        phone: String(x.phone ?? ""),
+        company: String(x.company ?? ""),
+        source: String(x.source ?? ""),
+        notes: String(x.notes ?? ""),
+        group: x.group ? String(x.group) : undefined,
+        isReferral: typeof x.isReferral === "boolean" ? x.isReferral : undefined,
+        referralSource: x.referralSource ? String(x.referralSource) : undefined,
+        referralPaymentMade: typeof x.referralPaymentMade === "boolean" ? x.referralPaymentMade : undefined,
+        referralPaymentAmount: typeof x.referralPaymentAmount === "number" ? x.referralPaymentAmount : undefined,
+        initialCaptureDate: x.initialCaptureDate ? String(x.initialCaptureDate) : undefined,
+        nextFollowUpDate: x.nextFollowUpDate ? String(x.nextFollowUpDate) : undefined,
+        currentStep: x.currentStep ? String(x.currentStep) : undefined,
+        nextStep: x.nextStep ? String(x.nextStep) : undefined,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function isValidEmail(s: string): boolean {
+  const t = s.trim();
+  if (!t) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
 
 /** Today in YYYY-MM-DD (for initialCaptureDate default) */
 function todayISO(): string {
@@ -1042,7 +2098,7 @@ function AddLeadDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
-            <Button type="submit" className="bg-sv-blue hover:bg-sv-blue-light">Add Lead</Button>
+            <Button type="submit">Add Lead</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -1050,22 +2106,81 @@ function AddLeadDialog({
   );
 }
 
-function LeadsContent({ profileJob, profileRole }: { profileJob: string; profileRole: string }) {
-  const [leads, setLeads] = useState<Lead[]>([]);
+function LeadsContent({
+  profileJob,
+  profileRole,
+  profileIndustry,
+  onNavigateToSection,
+}: {
+  profileJob: string;
+  profileRole: string;
+  profileIndustry: string;
+  onNavigateToSection?: (section: SectionId) => void;
+}) {
+  const [activeLeadTab, setActiveLeadTab] = useState<LeadSubSectionId>("grid");
+  const [leads, setLeads] = useState<Lead[]>(() => loadStoredLeads());
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [leadView, setLeadView] = useState<"grid" | "grouped">("grid");
   const [groupByField, setGroupByField] = useState<string>("none");
   const [fieldConfig, setFieldConfig] = useState<LeadFieldsConfig>(() => loadLeadFieldsConfig());
   const visibleFieldConfig = visibleFieldConfigFrom(fieldConfig);
+  const visibleFields = useMemo(() => visibleFieldConfig.map((f) => f.dbName), [visibleFieldConfig]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSource, setFilterSource] = useState<string>("");
+  const [filterStep, setFilterStep] = useState<string>("");
+  const [filterReferral, setFilterReferral] = useState<"all" | "yes" | "no">("all");
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [isDragging, setIsDragging] = useState(false);
   const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [importSkippedDup, setImportSkippedDup] = useState(0);
+  const [importSkippedInvalid, setImportSkippedInvalid] = useState(0);
   const [importError, setImportError] = useState<string | null>(null);
+  const [importMode, setImportMode] = useState<"append" | "replace">("append");
+  const [importSkipDuplicates, setImportSkipDuplicates] = useState(true);
+  const [importValidateEmails, setImportValidateEmails] = useState(false);
+  const [lastImportHeaders, setLastImportHeaders] = useState<string[] | null>(null);
   const [leadQuantity, setLeadQuantity] = useState<number>(100);
   const [leadQuality, setLeadQuality] = useState<string>("Medium");
   const [leadVetted, setLeadVetted] = useState<string>("Vetted");
   const [leadOutputType, setLeadOutputType] = useState<string>("CSV");
+  const [genGeography, setGenGeography] = useState("");
+  const [genIndustryFocus, setGenIndustryFocus] = useState("");
+  const [genLeadType, setGenLeadType] = useState<string>("B2B");
+  const [genDataFreshness, setGenDataFreshness] = useState<string>("90");
+  const [genLanguage, setGenLanguage] = useState("English");
+  const [genExcludeExistingEmails, setGenExcludeExistingEmails] = useState(true);
+  const [genAddToGrid, setGenAddToGrid] = useState(false);
+  const [genClearBeforeAdd, setGenClearBeforeAdd] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [crmProvider, setCrmProvider] = useState<string>("");
+  const [crmSyncDirection, setCrmSyncDirection] = useState<string>("push");
+  const [crmConflict, setCrmConflict] = useState<string>("crm");
+  const [crmScope, setCrmScope] = useState<string>("all");
+  const [crmDedupe, setCrmDedupe] = useState(true);
+  const [crmLastSync, setCrmLastSync] = useState<string | null>(null);
+  const [crmSyncBusy, setCrmSyncBusy] = useState(false);
+  const [crmSyncNote, setCrmSyncNote] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const leadsRef = useRef(leads);
+  leadsRef.current = leads;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.leads, JSON.stringify(leads));
+    } catch {
+      /* ignore */
+    }
+  }, [leads]);
+
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem(STORAGE_KEYS.crmLastSync);
+      setCrmLastSync(t || null);
+    } catch {
+      setCrmLastSync(null);
+    }
+  }, []);
 
   const addLead = (lead: Omit<Lead, "id">) => {
     setLeads((prev) => [...prev, { ...lead, id: crypto.randomUUID() }]);
@@ -1074,9 +2189,148 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
     setLeads((prev) => prev.filter((l) => l.id !== id));
   };
 
+  const columnLabel = (fid: string) =>
+    visibleFieldConfig.find((v) => v.dbName === fid)?.displayName ??
+    LEAD_FIELDS.find((f) => f.id === fid)?.label ??
+    fid;
+
+  const uniqueSources = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of leads) {
+      if (l.source) set.add(l.source);
+    }
+    return Array.from(set).sort();
+  }, [leads]);
+  const uniqueSteps = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of leads) {
+      if (l.currentStep) set.add(l.currentStep);
+    }
+    return Array.from(set).sort();
+  }, [leads]);
+
+  const processedLeads = useMemo(() => {
+    let list = [...leads];
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((lead) =>
+        [
+          lead.name,
+          lead.email,
+          lead.phone,
+          lead.company,
+          lead.source,
+          lead.notes,
+          lead.group,
+          lead.currentStep,
+          lead.nextStep,
+          lead.referralSource,
+        ].some((v) => String(v ?? "").toLowerCase().includes(q))
+      );
+    }
+    if (filterSource) list = list.filter((l) => l.source === filterSource);
+    if (filterStep) list = list.filter((l) => (l.currentStep || "") === filterStep);
+    if (filterReferral === "yes") list = list.filter((l) => l.isReferral);
+    if (filterReferral === "no") list = list.filter((l) => !l.isReferral);
+    if (sortKey) {
+      list.sort((a, b) => {
+        const av = getLeadValue(a, sortKey).replace(/—/g, "").toLowerCase();
+        const bv = getLeadValue(b, sortKey).replace(/—/g, "").toLowerCase();
+        const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+    }
+    return list;
+  }, [leads, searchQuery, filterSource, filterStep, filterReferral, sortKey, sortDir]);
+
+  const toggleSort = (fid: string) => {
+    if (sortKey === fid) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(fid);
+      setSortDir("asc");
+    }
+  };
+
+  const exportGridCsv = () => {
+    const header = [...visibleFields, "id"];
+    const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+    const lines = [
+      header.join(","),
+      ...processedLeads.map((lead) =>
+        header
+          .map((fid) => {
+            if (fid === "id") return esc(lead.id);
+            const raw = (lead as Record<string, unknown>)[fid];
+            const cell =
+              raw === undefined || raw === null
+                ? ""
+                : typeof raw === "boolean"
+                  ? raw
+                    ? "yes"
+                    : "no"
+                  : String(raw);
+            return esc(cell);
+          })
+          .join(",")
+      ),
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leads_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleGenerateLeads = () => {
     setIsGenerating(true);
-    setTimeout(() => setIsGenerating(false), 2000);
+    setTimeout(() => {
+      const first = ["Alex", "Jordan", "Taylor", "Riley", "Morgan", "Casey", "Jamie", "Quinn"];
+      const last = ["Chen", "Rivera", "Patel", "Nguyen", "Okafor", "Silva", "Park", "Bakker"];
+      const companies = ["Northwind", "Contoso", "Fabrikam", "Adventure", "Litware", "Wide World"];
+      const existingEmails = new Set(leads.map((l) => l.email.trim().toLowerCase()).filter(Boolean));
+      const batch: Lead[] = [];
+      let n = 0;
+      let i = 0;
+      while (n < leadQuantity && i < leadQuantity * 3) {
+        i += 1;
+        const fn = first[Math.floor(Math.random() * first.length)];
+        const ln = last[Math.floor(Math.random() * last.length)];
+        const co = companies[Math.floor(Math.random() * companies.length)];
+        const email = `${fn.toLowerCase()}.${ln.toLowerCase()}${i}@example.com`;
+        if (genExcludeExistingEmails && existingEmails.has(email.toLowerCase())) continue;
+        existingEmails.add(email.toLowerCase());
+        batch.push({
+          id: crypto.randomUUID(),
+          name: `${fn} ${ln}`,
+          email,
+          phone: `+1 555-${String(100 + (i % 900)).padStart(3, "0")}-${String(1000 + (i % 9000)).slice(-4)}`,
+          company: `${co} ${genLeadType === "B2C" ? "Household" : "LLC"}`,
+          source: `Generated · ${leadQuality} · ${leadVetted}${profileIndustry ? ` · ${profileIndustry}` : ""}`,
+          notes: [
+            genGeography && `Geo: ${genGeography}`,
+            genIndustryFocus && `Vertical: ${genIndustryFocus}`,
+            `Freshness: ${genDataFreshness}d`,
+            genLanguage && `Lang: ${genLanguage}`,
+            profileJob && `Job ctx: ${profileJob}`,
+            profileRole && `Role: ${profileRole}`,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          initialCaptureDate: LEAD_DEFAULTS.initialCaptureDate(),
+          nextFollowUpDate: LEAD_DEFAULTS.nextFollowUpDate(),
+          currentStep: LEAD_DEFAULTS.currentStep,
+          nextStep: LEAD_DEFAULTS.nextStep,
+        });
+        n += 1;
+      }
+      if (genAddToGrid) {
+        setLeads((prev) => (genClearBeforeAdd ? batch : [...prev, ...batch]));
+      }
+      setIsGenerating(false);
+    }, 1600);
   };
 
   const parseCsv = (text: string): string[][] => {
@@ -1105,6 +2359,8 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
 
   const handleFile = (file: File) => {
     setImportError(null);
+    setImportSkippedDup(0);
+    setImportSkippedInvalid(0);
     if (!file.name.endsWith(".csv")) {
       setImportError("Please upload a CSV file.");
       return;
@@ -1116,59 +2372,104 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
         const rows = parseCsv(text);
         if (rows.length < 2) {
           setImportedCount(0);
+          setLastImportHeaders(null);
           return;
         }
         const headers = rows[0].map((h) => h.toLowerCase().replace(/\s/g, "_"));
+        setLastImportHeaders(headers);
         const dataRows = rows.slice(1);
-        const newLeads: Lead[] = dataRows
-          .filter((row) => row.some((c) => c))
-          .map((row) => {
-            const get = (cols: string[]) => {
+        let reportDup = 0;
+        let reportInv = 0;
+        let reportImported = 0;
+        const parseRow = (row: string[]): Lead => {
+          const get = (cols: string[]) => {
+            const i = cols.findIndex((c) => headers.includes(c));
+            return i >= 0 ? (row[headers.indexOf(cols[i])] || "").trim() : "";
+          };
+          const name = get(["name"]) || get(["Name"]);
+          const email = get(["email"]) || get(["Email"]);
+          const phone = get(["phone"]) || get(["Phone"]);
+          const company = get(["company"]) || get(["Company"]);
+          const source = get(["source"]) || get(["Source"]);
+          const notes = get(["notes"]) || get(["Notes"]);
+          const isRefRaw = get(["is_referral", "isreferral"]);
+          const isReferral = /^(1|yes|true)$/i.test(isRefRaw);
+          const referralSource = get(["referred_by", "referralsource", "referral_source"]);
+          const refPayRaw = get(["ref_payment_made", "refpaymentmade"]);
+          const referralPaymentMade = /^(1|yes|true)$/i.test(refPayRaw);
+          const refAmt = get(["ref_amount", "refamount"]);
+          const referralPaymentAmount = refAmt ? parseFloat(refAmt) || undefined : undefined;
+          const initialCaptureDate = get(["initial_capture_date", "initialcapturedate"]);
+          const nextFollowUpDate = get(["next_follow_up_date", "nextfollowupdate"]);
+          const currentStep = get(["current_step", "currentstep"]);
+          const nextStep = get(["next_step", "nextstep"]);
+          const groupVal = get(["group"]);
+          return {
+            id: crypto.randomUUID(),
+            name,
+            email,
+            phone,
+            company,
+            source,
+            notes,
+            group: groupVal || undefined,
+            isReferral: isReferral || undefined,
+            referralSource: referralSource || undefined,
+            referralPaymentMade: referralPaymentMade || undefined,
+            referralPaymentAmount,
+            initialCaptureDate: initialCaptureDate || LEAD_DEFAULTS.initialCaptureDate(),
+            nextFollowUpDate: nextFollowUpDate || LEAD_DEFAULTS.nextFollowUpDate(),
+            currentStep: currentStep || LEAD_DEFAULTS.currentStep,
+            nextStep: nextStep || LEAD_DEFAULTS.nextStep,
+          };
+        };
+
+        const prev = leadsRef.current;
+        const emailSet = new Set<string>();
+        if (importSkipDuplicates) {
+          const pool = importMode === "replace" ? [] : prev;
+          for (const l of pool) {
+            const e = l.email.trim().toLowerCase();
+            if (e) emailSet.add(e);
+          }
+        }
+        const collected: Lead[] = [];
+        let dup = 0;
+        let inv = 0;
+        for (const row of dataRows) {
+          if (!row.some((c) => c)) continue;
+          if (importValidateEmails) {
+            const getE = (cols: string[]) => {
               const i = cols.findIndex((c) => headers.includes(c));
               return i >= 0 ? (row[headers.indexOf(cols[i])] || "").trim() : "";
             };
-            const name = get(["name"]) || get(["Name"]);
-            const email = get(["email"]) || get(["Email"]);
-            const phone = get(["phone"]) || get(["Phone"]);
-            const company = get(["company"]) || get(["Company"]);
-            const source = get(["source"]) || get(["Source"]);
-            const notes = get(["notes"]) || get(["Notes"]);
-            const isRefRaw = get(["is_referral", "isreferral"]);
-            const isReferral = /^(1|yes|true)$/i.test(isRefRaw);
-            const referralSource = get(["referred_by", "referralsource", "referral_source"]);
-            const refPayRaw = get(["ref_payment_made", "refpaymentmade"]);
-            const referralPaymentMade = /^(1|yes|true)$/i.test(refPayRaw);
-            const refAmt = get(["ref_amount", "refamount"]);
-            const referralPaymentAmount = refAmt ? parseFloat(refAmt) || undefined : undefined;
-            const initialCaptureDate = get(["initial_capture_date", "initialcapturedate"]);
-            const nextFollowUpDate = get(["next_follow_up_date", "nextfollowupdate"]);
-            const currentStep = get(["current_step", "currentstep"]);
-            const nextStep = get(["next_step", "nextstep"]);
-            return {
-              id: crypto.randomUUID(),
-              name,
-              email,
-              phone,
-              company,
-              source,
-              notes,
-              isReferral: isReferral || undefined,
-              referralSource: referralSource || undefined,
-              referralPaymentMade: referralPaymentMade || undefined,
-              referralPaymentAmount,
-              initialCaptureDate: initialCaptureDate || LEAD_DEFAULTS.initialCaptureDate(),
-              nextFollowUpDate: nextFollowUpDate || LEAD_DEFAULTS.nextFollowUpDate(),
-              currentStep: currentStep || LEAD_DEFAULTS.currentStep,
-              nextStep: nextStep || LEAD_DEFAULTS.nextStep,
-            };
-          });
-        setLeads((prev) => [...prev, ...newLeads]);
-        setImportedCount(newLeads.length);
+            const em = getE(["email"]) || getE(["Email"]);
+            if (!isValidEmail(em)) {
+              inv += 1;
+              continue;
+            }
+          }
+          const lead = parseRow(row);
+          const ek = lead.email.trim().toLowerCase();
+          if (importSkipDuplicates && ek && emailSet.has(ek)) {
+            dup += 1;
+            continue;
+          }
+          if (ek) emailSet.add(ek);
+          collected.push(lead);
+        }
+        reportDup = dup;
+        reportInv = inv;
+        reportImported = collected.length;
+        setImportSkippedDup(reportDup);
+        setImportSkippedInvalid(reportInv);
+        setImportedCount(reportImported);
+        setLeads(importMode === "replace" ? collected : [...prev, ...collected]);
       } catch {
         setImportError("Could not parse CSV. Please check the file format.");
       }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "UTF-8");
   };
 
   const onDrop = (e: React.DragEvent) => {
@@ -1195,150 +2496,564 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
     URL.revokeObjectURL(url);
   };
 
+  const leadSectionMeta = leadSubSections.find((s) => s.id === activeLeadTab);
+
+  const handleCrmSync = () => {
+    if (!crmProvider) {
+      setCrmSyncNote("Choose a CRM target first.");
+      setTimeout(() => setCrmSyncNote(null), 5000);
+      return;
+    }
+    setCrmSyncBusy(true);
+    setCrmSyncNote(null);
+    setTimeout(() => {
+      const t = new Date().toISOString();
+      try {
+        localStorage.setItem(STORAGE_KEYS.crmLastSync, t);
+      } catch {
+        /* ignore */
+      }
+      setCrmLastSync(t);
+      setCrmSyncBusy(false);
+      const scopeN =
+        crmScope === "filtered" ? processedLeads.length : crmScope === "newSinceLast" ? Math.min(leads.length, 12) : leads.length;
+      setCrmSyncNote(
+        `Demo sync recorded at ${new Date(t).toLocaleString()}: ${crmSyncDirection} · ~${scopeN} lead(s) · dedupe ${crmDedupe ? "on" : "off"} · conflict: ${crmConflict}. Connect under Integrations for production.`
+      );
+      setTimeout(() => setCrmSyncNote(null), 10000);
+    }, 900);
+  };
+
+  const LeadsSubNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">Leads</p>
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        {leadSubSections.map((sec) => {
+          const Icon = sec.icon;
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => setActiveLeadTab(sec.id)}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeLeadTab === sec.id ? "bg-sv-blue/10 text-sv-blue" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{sec.shortLabel}</span>
+              <span className="hidden lg:inline">{sec.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  const renderLeadsTable = (rows: Lead[], sortable: boolean) => (
+    <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {visibleFields.map((fid) => (
+              <TableHead key={fid}>
+                {sortable ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSort(fid)}
+                    className="inline-flex items-center gap-1.5 font-medium text-left hover:text-sv-blue -mx-1 px-1 rounded"
+                  >
+                    {columnLabel(fid)}
+                    {sortKey === fid ? (
+                      <span className="text-sv-blue text-xs tabular-nums" aria-hidden>
+                        {sortDir === "asc" ? "↑" : "↓"}
+                      </span>
+                    ) : (
+                      <ArrowUpDown className="w-3.5 h-3.5 opacity-40 shrink-0" aria-hidden />
+                    )}
+                  </button>
+                ) : (
+                  <span className="font-medium">{columnLabel(fid)}</span>
+                )}
+              </TableHead>
+            ))}
+            <TableHead className="w-10" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((lead) => (
+            <TableRow key={lead.id}>
+              {visibleFields.map((fid) => (
+                <TableCell key={fid} className="max-w-[220px] truncate" title={getLeadValue(lead, fid)}>
+                  {getLeadValue(lead, fid)}
+                </TableCell>
+              ))}
+              <TableCell>
+                <button
+                  type="button"
+                  onClick={() => removeLead(lead.id)}
+                  className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                  aria-label="Remove lead"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Leads</h1>
-      <p className="text-gray-600 mb-8">
-        Import leads from a CSV file. Imported leads will be added to your workflows and available for follow-up.
-      </p>
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {LeadsSubNav}
+      </aside>
 
-      <div className="max-w-4xl space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-sv-blue" />
-            Generate Fresh Leads
-          </h3>
-          <p className="text-sm text-gray-500">
-            Generate leads based on your Job and Role from Profile. Set them in Profile for better targeting. Results will download as a file.
-          </p>
-          {(profileJob || profileRole) && (
-            <p className="text-sm text-gray-700">
-              Targeting:{" "}
-              <span className="font-medium">{profileJob || "—"}</span>
-              {profileRole && ` · ${profileRole}`}
-            </p>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Number of leads</label>
-              <select
-                value={leadQuantity}
-                onChange={(e) => setLeadQuantity(Number(e.target.value))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
-              >
-                {LEAD_QUANTITY_OPTIONS.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
+      <div className="flex-1 min-w-0 max-w-5xl">
+        <nav className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3" aria-hidden>
+          <span>Leads</span>
+          <ChevronRight className="w-3 h-3 shrink-0" />
+          <span className="text-gray-600">{leadSectionMeta?.label}</span>
+        </nav>
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Leads</h1>
+        <p className="text-gray-600 mb-6 max-w-2xl">{leadSectionMeta?.description}</p>
+
+        <AddLeadDialog open={addLeadOpen} onOpenChange={setAddLeadOpen} onAdd={addLead} />
+
+        {activeLeadTab === "grid" && (
+          <div className="space-y-5">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <Label className="text-xs text-gray-500 mb-1.5 block">Search</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Name, email, company, source, notes…"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <div className="w-full sm:w-[160px]">
+                  <Label className="text-xs text-gray-500 mb-1.5 block">Source</Label>
+                  <Select value={filterSource || "__all__"} onValueChange={(v) => setFilterSource(v === "__all__" ? "" : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All sources" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All sources</SelectItem>
+                      {uniqueSources.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-full sm:w-[160px]">
+                  <Label className="text-xs text-gray-500 mb-1.5 block">Current step</Label>
+                  <Select value={filterStep || "__all__"} onValueChange={(v) => setFilterStep(v === "__all__" ? "" : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All steps" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All steps</SelectItem>
+                      {uniqueSteps.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-full sm:w-[140px]">
+                  <Label className="text-xs text-gray-500 mb-1.5 block">Referral</Label>
+                  <Select value={filterReferral} onValueChange={(v) => setFilterReferral(v as "all" | "yes" | "no")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="yes">Referrals only</SelectItem>
+                      <SelectItem value="no">Non-referrals</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 justify-between border-t border-gray-100 pt-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" onClick={() => setAddLeadOpen(true)}>
+                    <Plus className="w-4 h-4" />
+                    Add lead
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={exportGridCsv} disabled={processedLeads.length === 0}>
+                    <Download className="w-4 h-4" />
+                    Export CSV
+                  </Button>
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setLeadView("grid")}
+                      className={`px-3 py-1.5 text-sm ${leadView === "grid" ? "bg-sv-blue/10 text-sv-blue font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      <LayoutGrid className="w-4 h-4 inline mr-1.5 align-middle" />
+                      Table
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeadView("grouped")}
+                      className={`px-3 py-1.5 text-sm border-l border-gray-200 ${leadView === "grouped" ? "bg-sv-blue/10 text-sv-blue font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      <Layers className="w-4 h-4 inline mr-1.5 align-middle" />
+                      Grouped
+                    </button>
+                  </div>
+                  {leadView === "grouped" && (
+                    <Select value={groupByField} onValueChange={setGroupByField}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Group by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GROUP_BY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.id} value={opt.id}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings2 className="w-4 h-4" />
+                      Columns
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 max-h-80 overflow-y-auto">
+                    <p className="text-sm font-medium mb-3">Visible columns</p>
+                    <div className="space-y-2">
+                      {fieldConfig.fields.map((f) => (
+                        <label key={f.dbName} className="flex items-center gap-2 cursor-pointer text-sm">
+                          <Checkbox
+                            checked={f.visible}
+                            onCheckedChange={(checked) => {
+                              const next = fieldConfig.fields.map((x) =>
+                                x.dbName === f.dbName ? { ...x, visible: !!checked } : x
+                              );
+                              setFieldConfig({ fields: next });
+                              saveLeadFieldsConfig({ fields: next });
+                            }}
+                          />
+                          {f.displayName}
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
+                      <Link href="/client-portal#leads-config" className="text-sv-blue hover:underline">
+                        Configure fields & display names
+                      </Link>
+                    </p>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <p className="text-xs text-gray-500">
+                Showing <span className="font-medium text-gray-700">{processedLeads.length}</span> of{" "}
+                <span className="font-medium text-gray-700">{leads.length}</span> leads
+                {searchQuery.trim() || filterSource || filterStep || filterReferral !== "all" ? " (filters active)" : ""}.
+                Leads are saved in this browser.
+              </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quality</label>
-              <select
-                value={leadQuality}
-                onChange={(e) => setLeadQuality(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
-              >
-                {LEAD_QUALITY_OPTIONS.map((q) => (
-                  <option key={q} value={q}>
-                    {q}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Vetting</label>
-              <select
-                value={leadVetted}
-                onChange={(e) => setLeadVetted(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
-              >
-                {LEAD_VETTED_OPTIONS.map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Output type</label>
-              <select
-                value={leadOutputType}
-                onChange={(e) => setLeadOutputType(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
-              >
-                {LEAD_OUTPUT_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+            {leads.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6 rounded-xl border border-dashed border-gray-200 bg-white px-6">
+                No leads yet. Use <strong>Import</strong> or <strong>Generate</strong>, or click <strong>Add lead</strong>.
+              </p>
+            ) : processedLeads.length === 0 ? (
+              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                No leads match your search or filters. Clear filters or broaden your search.
+              </p>
+            ) : leadView === "grid" ? (
+              renderLeadsTable(processedLeads, true)
+            ) : (
+              <div className="space-y-2">
+                {(() => {
+                  const groups = new Map<string, Lead[]>();
+                  for (const lead of processedLeads) {
+                    const key = getGroupKey(lead, groupByField);
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key)!.push(lead);
+                  }
+                  const sortedG = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+                  return sortedG.map(([key, items]) => (
+                    <Collapsible key={key || "blank"}>
+                      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100 gap-2">
+                        <span className="truncate min-w-0">{key || "(blank)"}</span>
+                        <span className="text-gray-500 shrink-0">
+                          {items.length} lead{items.length !== 1 ? "s" : ""}
+                        </span>
+                        <ChevronDown className="w-4 h-4 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="mt-2">{renderLeadsTable(items, false)}</div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ));
+                })()}
+              </div>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={handleGenerateLeads}
-            disabled={isGenerating}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Sparkles className="w-4 h-4" />
-            {isGenerating ? "Generating..." : "Generate leads"}
-          </button>
-        </div>
+        )}
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Upload className="w-5 h-5 text-sv-blue" />
-            Import leads
-          </h3>
-          <p className="text-sm text-gray-500">
-            Upload a CSV file with columns: name, email, phone, company, source, notes. Use our template to get started.
-          </p>
-
-          <div
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-              isDragging ? "border-sv-blue bg-sv-blue/5" : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file);
-                e.target.value = "";
-              }}
-            />
-            <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              Drag and drop your CSV here, or{" "}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-sv-blue hover:text-sv-blue-light font-medium"
-              >
-                browse to upload
-              </button>
+        {activeLeadTab === "generate" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-sv-blue" />
+              Generate leads
+            </h3>
+            <p className="text-sm text-gray-500">
+              Tune list size and quality, then optionally add demo rows to your grid. Profile job, role, and industry improve
+              targeting labels. File export ({leadOutputType}) can be wired when backend generation is connected.
             </p>
-            <p className="text-xs text-gray-500">Maximum file size: 10MB. Supports .csv files only.</p>
+            <div className="text-sm text-gray-700 space-y-1">
+              {(profileJob || profileRole || profileIndustry) && (
+                <p>
+                  <span className="font-medium">Profile context:</span>{" "}
+                  {[profileJob, profileRole, profileIndustry].filter(Boolean).join(" · ")}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Number of leads</label>
+                <select
+                  value={leadQuantity}
+                  onChange={(e) => setLeadQuantity(Number(e.target.value))}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  {LEAD_QUANTITY_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Quality</label>
+                <select
+                  value={leadQuality}
+                  onChange={(e) => setLeadQuality(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  {LEAD_QUALITY_OPTIONS.map((q) => (
+                    <option key={q} value={q}>
+                      {q}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vetting</label>
+                <select
+                  value={leadVetted}
+                  onChange={(e) => setLeadVetted(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  {LEAD_VETTED_OPTIONS.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Output type</label>
+                <select
+                  value={leadOutputType}
+                  onChange={(e) => setLeadOutputType(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  {LEAD_OUTPUT_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Lead type</label>
+                <select
+                  value={genLeadType}
+                  onChange={(e) => setGenLeadType(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="B2B">B2B</option>
+                  <option value="B2C">B2C</option>
+                  <option value="Mixed">Mixed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Data freshness (days)</label>
+                <select
+                  value={genDataFreshness}
+                  onChange={(e) => setGenDataFreshness(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="30">Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                  <option value="365">Last 12 months</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                <Input value={genLanguage} onChange={(e) => setGenLanguage(e.target.value)} placeholder="English" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Geography / markets</label>
+                <Input
+                  value={genGeography}
+                  onChange={(e) => setGenGeography(e.target.value)}
+                  placeholder="e.g. US Southeast, DACH, Ontario…"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Industry / vertical focus</label>
+                <Input
+                  value={genIndustryFocus}
+                  onChange={(e) => setGenIndustryFocus(e.target.value)}
+                  placeholder="Overrides profile industry when set"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={genExcludeExistingEmails} onCheckedChange={(c) => setGenExcludeExistingEmails(!!c)} />
+                <span>Exclude emails already in the grid (by generated pattern)</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={genAddToGrid} onCheckedChange={(c) => setGenAddToGrid(!!c)} />
+                <span>Add generated demo leads to the Grid (safe sample data)</span>
+              </label>
+              {genAddToGrid && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer pl-6">
+                  <Checkbox checked={genClearBeforeAdd} onCheckedChange={(c) => setGenClearBeforeAdd(!!c)} />
+                  <span>Replace all existing leads before adding (destructive)</span>
+                </label>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateLeads}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Sparkles className="w-4 h-4" />
+              {isGenerating ? "Generating…" : "Generate"}
+            </button>
           </div>
+        )}
 
-          {importError && (
-            <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg">{importError}</p>
-          )}
-          {importedCount !== null && !importError && (
-            <p className="text-sm text-green-700 bg-green-50 px-4 py-2 rounded-lg">
-              Imported {importedCount} lead{importedCount !== 1 ? "s" : ""} from file.
+        {activeLeadTab === "import" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-sv-blue" />
+              Import CSV
+            </h3>
+            <p className="text-sm text-gray-500">
+              Use UTF-8 encoded CSV. Headers are matched case-insensitively; spaces become underscores (e.g.{" "}
+              <code className="text-xs bg-gray-100 px-1 rounded">Initial Capture Date</code> →{" "}
+              <code className="text-xs bg-gray-100 px-1 rounded">initial_capture_date</code>). See template for full column set.
             </p>
-          )}
-
-          <div className="flex items-center gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <p className="font-medium text-gray-800">Import mode</p>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="importMode"
+                    checked={importMode === "append"}
+                    onChange={() => setImportMode("append")}
+                    className="text-sv-blue"
+                  />
+                  Append to existing leads
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="importMode"
+                    checked={importMode === "replace"}
+                    onChange={() => setImportMode("replace")}
+                    className="text-sv-blue"
+                  />
+                  Replace all leads with this file
+                </label>
+              </div>
+              <div className="space-y-2">
+                <p className="font-medium text-gray-800">Validation</p>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={importSkipDuplicates} onCheckedChange={(c) => setImportSkipDuplicates(!!c)} />
+                  Skip rows with duplicate email (vs existing + within file)
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={importValidateEmails} onCheckedChange={(c) => setImportValidateEmails(!!c)} />
+                  Require valid email format (skip invalid rows)
+                </label>
+              </div>
+            </div>
+            {lastImportHeaders && lastImportHeaders.length > 0 && (
+              <div className="rounded-lg bg-gray-50 border border-gray-100 px-4 py-3 text-xs text-gray-600">
+                <p className="font-medium text-gray-800 mb-1">Last file — detected columns</p>
+                <p className="break-all">{lastImportHeaders.join(", ")}</p>
+              </div>
+            )}
+            <div
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                isDragging ? "border-sv-blue bg-sv-blue/5" : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFile(file);
+                  e.target.value = "";
+                }}
+              />
+              <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Drag and drop your CSV here, or{" "}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sv-blue hover:text-sv-blue-light font-medium"
+                >
+                  browse to upload
+                </button>
+              </p>
+              <p className="text-xs text-gray-500">Maximum file size: 10MB. UTF-8 recommended.</p>
+            </div>
+            {importError && <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg">{importError}</p>}
+            {importedCount !== null && !importError && (
+              <div className="text-sm text-green-800 bg-green-50 border border-green-100 px-4 py-2 rounded-lg space-y-1">
+                <p>
+                  Imported <strong>{importedCount}</strong> lead{importedCount !== 1 ? "s" : ""}.
+                </p>
+                {(importSkippedDup > 0 || importSkippedInvalid > 0) && (
+                  <p className="text-green-900/90">
+                    Skipped {importSkippedDup} duplicate(s), {importSkippedInvalid} invalid email row(s).
+                  </p>
+                )}
+              </div>
+            )}
             <button
               type="button"
               onClick={downloadTemplate}
@@ -1348,209 +3063,108 @@ function LeadsContent({ profileJob, profileRole }: { profileJob: string; profile
               Download CSV template
             </button>
           </div>
-        </div>
+        )}
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        {activeLeadTab === "crm" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-gray-500" />
-              Your leads
+              <RefreshCw className="w-5 h-5 text-sv-blue" />
+              CRM sync
             </h3>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={() => setAddLeadOpen(true)} className="bg-sv-blue hover:bg-sv-blue-light">
-                <Plus className="w-4 h-4" />
-                Add Lead
-              </Button>
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setLeadView("grid")}
-                  className={`px-3 py-1.5 text-sm ${leadView === "grid" ? "bg-sv-blue/10 text-sv-blue font-medium" : "text-gray-600 hover:bg-gray-50"}`}
-                >
-                  <LayoutGrid className="w-4 h-4 inline mr-1.5 align-middle" />
-                  Grid
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLeadView("grouped")}
-                  className={`px-3 py-1.5 text-sm border-l border-gray-200 ${leadView === "grouped" ? "bg-sv-blue/10 text-sv-blue font-medium" : "text-gray-600 hover:bg-gray-50"}`}
-                >
-                  <Layers className="w-4 h-4 inline mr-1.5 align-middle" />
-                  Grouped
-                </button>
-              </div>
-              {leadView === "grouped" && (
-                <Select value={groupByField} onValueChange={setGroupByField}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Group by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GROUP_BY_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Settings2 className="w-4 h-4" />
-                    Fields
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-56 max-h-80 overflow-y-auto">
-                  <p className="text-sm font-medium mb-3">Visible columns</p>
-                  <div className="space-y-2">
-                    {fieldConfig.fields.map((f) => (
-                      <label key={f.dbName} className="flex items-center gap-2 cursor-pointer text-sm">
-                        <Checkbox
-                          checked={f.visible}
-                          onCheckedChange={(checked) => {
-                            const next = fieldConfig.fields.map((x) =>
-                              x.dbName === f.dbName ? { ...x, visible: !!checked } : x
-                            );
-                            setFieldConfig({ fields: next });
-                            saveLeadFieldsConfig({ fields: next });
-                          }}
-                        />
-                        {f.displayName}
-                      </label>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
-                    <Link href="/client-portal#leads-config" className="text-sv-blue hover:underline">
-                      Configure fields & display names
-                    </Link>
-                  </p>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {leads.length === 0 ? (
-            <p className="text-sm text-gray-500 py-6">
-              No leads yet. Add leads manually or import from a CSV file above.
+            <p className="text-sm text-gray-500">
+              Choose direction, scope, and conflict behavior. Field mapping usually mirrors your visible lead columns plus CRM
+              standard fields (contact, company, deal). Connect the real integration under{" "}
+              <strong>Integrations</strong> when available.
             </p>
-          ) : leadView === "grid" ? (
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {visibleFields.map((fid) => (
-                      <TableHead key={fid}>{LEAD_FIELDS.find((f) => f.id === fid)?.label ?? fid}</TableHead>
-                    ))}
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {leads.map((lead) => (
-                    <TableRow key={lead.id}>
-                      {visibleFields.map((fid) => (
-                        <TableCell key={fid}>{getLeadValue(lead, fid)}</TableCell>
-                      ))}
-                      <TableCell>
-                        <button
-                          type="button"
-                          onClick={() => removeLead(lead.id)}
-                          className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                          aria-label="Remove lead"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            {crmLastSync && (
+              <p className="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                Last recorded sync: <span className="font-medium">{new Date(crmLastSync).toLocaleString()}</span>
+              </p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">CRM</label>
+                <select
+                  value={crmProvider}
+                  onChange={(e) => setCrmProvider(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="">Select CRM…</option>
+                  <option value="hubspot">HubSpot</option>
+                  <option value="pipedrive">Pipedrive</option>
+                  <option value="salesforce">Salesforce</option>
+                  <option value="zoho">Zoho CRM</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
+                <select
+                  value={crmSyncDirection}
+                  onChange={(e) => setCrmSyncDirection(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="push">Push portal → CRM</option>
+                  <option value="pull">Pull CRM → portal</option>
+                  <option value="both">Two-way (preview)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Scope</label>
+                <select
+                  value={crmScope}
+                  onChange={(e) => setCrmScope(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="all">All leads in grid</option>
+                  <option value="filtered">Current grid filters only</option>
+                  <option value="newSinceLast">New / changed since last sync (demo)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">On conflict</label>
+                <select
+                  value={crmConflict}
+                  onChange={(e) => setCrmConflict(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="crm">CRM wins</option>
+                  <option value="portal">Portal wins</option>
+                  <option value="newest">Newest updated wins</option>
+                  <option value="manual">Queue for manual review</option>
+                </select>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {(() => {
-                const groups = new Map<string, Lead[]>();
-                for (const lead of leads) {
-                  const key = getGroupKey(lead, groupByField);
-                  if (!groups.has(key)) groups.set(key, []);
-                  groups.get(key)!.push(lead);
-                }
-                const sorted = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
-                return sorted.map(([key, items]) => (
-                  <Collapsible key={key || "blank"}>
-                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100">
-                      <span>{key || "(blank)"}</span>
-                      <span className="text-gray-500">
-                        {items.length} lead{items.length !== 1 ? "s" : ""}
-                      </span>
-                      <ChevronDown className="w-4 h-4 transition-transform [[data-state=open]_&]:rotate-180" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="mt-2 rounded-lg border border-gray-200 overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              {visibleFields.map((fid) => (
-                                <TableHead key={fid}>{LEAD_FIELDS.find((f) => f.id === fid)?.label ?? fid}</TableHead>
-                              ))}
-                              <TableHead className="w-10" />
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {items.map((lead) => (
-                              <TableRow key={lead.id}>
-                                {visibleFields.map((fid) => (
-                                  <TableCell key={fid}>{getLeadValue(lead, fid)}</TableCell>
-                                ))}
-                                <TableCell>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeLead(lead.id)}
-                                    className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                                    aria-label="Remove lead"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ));
-              })()}
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={crmDedupe} onCheckedChange={(c) => setCrmDedupe(!!c)} />
+              <span>Deduplicate by email when pushing</span>
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={crmSyncBusy}
+                onClick={handleCrmSync}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-sv-blue hover:text-sv-blue-light border border-sv-blue rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${crmSyncBusy ? "animate-spin" : ""}`} />
+                {crmSyncBusy ? "Syncing…" : "Sync now (demo)"}
+              </button>
+              {onNavigateToSection && (
+                <Button type="button" variant="outline" size="sm" onClick={() => onNavigateToSection("integrations")}>
+                  <Plug2 className="w-4 h-4" />
+                  Integrations
+                </Button>
+              )}
             </div>
-          )}
-        </div>
-
-        <AddLeadDialog open={addLeadOpen} onOpenChange={setAddLeadOpen} onAdd={addLead} />
-
-        {/* CRM Sync — contextual to leads */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-sv-blue" />
-            CRM Sync
-          </h3>
-          <p className="text-sm text-gray-500">
-            Sync imported and generated leads to your connected CRM. Keep contacts and activities in sync.
-          </p>
-          <div className="flex items-center gap-3">
-            <select className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white">
-              <option>Select CRM...</option>
-              <option>HubSpot</option>
-              <option>Pipedrive</option>
-              <option>Salesforce</option>
-            </select>
-            <button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-sv-blue hover:text-sv-blue-light border border-sv-blue rounded-lg transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Sync now
-            </button>
+            {crmSyncNote && <p className="text-sm text-gray-700 bg-sv-blue/5 border border-sv-blue/15 rounded-lg px-4 py-3">{crmSyncNote}</p>}
+            <p className="text-xs text-gray-500">
+              Tip: Align custom fields in{" "}
+              <Link href="/client-portal#leads-config" className="text-sv-blue hover:underline">
+                Leads field configuration
+              </Link>{" "}
+              before turning on production sync.
+            </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -1633,6 +3247,45 @@ function SocialLogo({ platformId, className = "w-5 h-5" }: { platformId: SocialI
   );
 }
 
+type ProfileSectionId = "personal" | "social-marketing" | "security" | "account";
+
+const profileSections: {
+  id: ProfileSectionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "personal",
+    label: "Personal information",
+    shortLabel: "Personal",
+    description: "Name, contact details, and professional role used across the portal and lead workflows.",
+    icon: User,
+  },
+  {
+    id: "social-marketing",
+    label: "Social & marketing",
+    shortLabel: "Social",
+    description: "Linked social profiles for campaigns, automations, and client-facing touchpoints.",
+    icon: Share2,
+  },
+  {
+    id: "security",
+    label: "Security",
+    shortLabel: "Security",
+    description: "Sign-in security, alerts, and how we protect your portal access.",
+    icon: Shield,
+  },
+  {
+    id: "account",
+    label: "Account",
+    shortLabel: "Account",
+    description: "Notifications, language, data export, and account options.",
+    icon: Settings2,
+  },
+];
+
 function ProfileContent({
   industry,
   setIndustry,
@@ -1648,6 +3301,7 @@ function ProfileContent({
   role: string;
   setRole: (v: string) => void;
 }) {
+  const [activeProfileSection, setActiveProfileSection] = useState<ProfileSectionId>("personal");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -1656,6 +3310,12 @@ function ProfileContent({
   const [urlInput, setUrlInput] = useState("");
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [sessionAlertEmail, setSessionAlertEmail] = useState(true);
+  const [emailProductUpdates, setEmailProductUpdates] = useState(true);
+  const [emailMarketing, setEmailMarketing] = useState(false);
+  const [preferredLanguage, setPreferredLanguage] = useState("en-US");
+  const [mergeError, setMergeError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -1669,6 +3329,11 @@ function ProfileContent({
         if (parsed.job) setJob(parsed.job);
         if (parsed.role) setRole(parsed.role);
         if (Array.isArray(parsed.socialProfiles)) setAddedProfiles(parsed.socialProfiles);
+        if (typeof parsed.twoFactorEnabled === "boolean") setTwoFactorEnabled(parsed.twoFactorEnabled);
+        if (typeof parsed.sessionAlertEmail === "boolean") setSessionAlertEmail(parsed.sessionAlertEmail);
+        if (typeof parsed.emailProductUpdates === "boolean") setEmailProductUpdates(parsed.emailProductUpdates);
+        if (typeof parsed.emailMarketing === "boolean") setEmailMarketing(parsed.emailMarketing);
+        if (typeof parsed.preferredLanguage === "string") setPreferredLanguage(parsed.preferredLanguage);
       }
     } catch {}
   }, [setIndustry, setJob, setRole]);
@@ -1698,8 +3363,20 @@ function ProfileContent({
     ...formatErrors,
   ];
   const isComplete = missingFields.length === 0 && formatErrors.length === 0;
-  const emailInvalid = email.trim() !== "" && !isValidEmail(email);
-  const phoneInvalid = phone.trim() !== "" && !isValidPhone(phone);
+
+  const persistProfileMerge = (patch: Record<string, unknown>) => {
+    try {
+      setMergeError(null);
+      const raw = localStorage.getItem(STORAGE_KEYS.profile);
+      const prev = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      const merged = { ...prev, ...patch };
+      localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(merged));
+      setSavedFeedback(true);
+      setTimeout(() => setSavedFeedback(false), 2000);
+    } catch {
+      setMergeError("Could not save. Please try again.");
+    }
+  };
 
   const handleSaveProfile = () => {
     if (!isComplete) {
@@ -1707,6 +3384,7 @@ function ProfileContent({
       return;
     }
     setValidationErrors([]);
+    setMergeError(null);
     const data = {
       fullName,
       email,
@@ -1715,10 +3393,31 @@ function ProfileContent({
       job,
       role,
       socialProfiles: addedProfiles,
+      twoFactorEnabled,
+      sessionAlertEmail,
+      emailProductUpdates,
+      emailMarketing,
+      preferredLanguage,
     };
     localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(data));
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 2000);
+  };
+
+  const handleSaveSocialProfiles = () => {
+    setValidationErrors([]);
+    persistProfileMerge({ socialProfiles: addedProfiles });
+  };
+
+  const handleSaveSecurityAccount = () => {
+    setValidationErrors([]);
+    persistProfileMerge({
+      twoFactorEnabled,
+      sessionAlertEmail,
+      emailProductUpdates,
+      emailMarketing,
+      preferredLanguage,
+    });
   };
 
   const addProfile = () => {
@@ -1742,212 +3441,491 @@ function ProfileContent({
   const addedPlatformIds = new Set(addedProfiles.map((p) => p.platformId));
   const availablePlatforms = SOCIAL_PLATFORMS.filter((p) => !addedPlatformIds.has(p.id));
 
-  return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Profile</h1>
-      <p className="text-gray-600 mb-8">
-        Manage your personal information and social accounts for marketing and sales.
+  const sectionMeta = profileSections.find((s) => s.id === activeProfileSection);
+
+  const ProfileSubNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
+        Profile
       </p>
-
-      <div className="max-w-5xl space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900">Personal information</h3>
-          {validationErrors.length > 0 && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
-              <span className="font-medium">{missingFields.length > 0 ? "Please fill in all required fields" : "Please fix the following"}: </span>
-              {validationErrors.join(", ")}
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full name <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              placeholder="Your name"
-              value={fullName}
-              onChange={(e) => { setFullName(e.target.value); setValidationErrors([]); }}
-              required
-              className={`w-full px-4 py-2 rounded-lg border text-sm ${!fullName.trim() && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-red-500">*</span></label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setValidationErrors([]); }}
-              required
-              className={`w-full px-4 py-2 rounded-lg border text-sm ${(!email.trim() || !isValidEmail(email)) && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone number <span className="text-red-500">*</span></label>
-            <input
-              type="tel"
-              placeholder="+1 (555) 000-0000"
-              value={phone}
-              onChange={(e) => { setPhone(e.target.value); setValidationErrors([]); }}
-              required
-              className={`w-full px-4 py-2 rounded-lg border text-sm ${(!phone.trim() || !isValidPhone(phone)) && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Industry <span className="text-red-500">*</span></label>
-            <select
-              value={industry}
-              onChange={(e) => { setIndustry(e.target.value); setValidationErrors([]); }}
-              required
-              className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!industry && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        {profileSections.map((sec) => {
+          const Icon = sec.icon;
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => {
+                setActiveProfileSection(sec.id);
+                setValidationErrors([]);
+                setMergeError(null);
+              }}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeProfileSection === sec.id
+                  ? "bg-sv-blue/10 text-sv-blue"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
             >
-              <option value="">Select your industry</option>
-              {INDUSTRY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Job <span className="text-red-500">*</span></label>
-            <select
-              value={job}
-              onChange={(e) => { setJob(e.target.value); setValidationErrors([]); }}
-              required
-              className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!job && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
-            >
-              <option value="">Select your job</option>
-              {JOB_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role <span className="text-red-500">*</span></label>
-            <select
-              value={role}
-              onChange={(e) => { setRole(e.target.value); setValidationErrors([]); }}
-              required
-              className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!role && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
-            >
-              <option value="">Select your role</option>
-              {ROLE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{sec.shortLabel}</span>
+              <span className="hidden lg:inline">{sec.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900">Social & marketing</h3>
-          <p className="text-sm text-gray-500">
-            Add your social profiles to connect with clients and support your marketing and sales efforts.
-          </p>
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {ProfileSubNav}
+      </aside>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Choose platform</label>
-              <select
-                value={selectedPlatform}
-                onChange={(e) => setSelectedPlatform(e.target.value as SocialId)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white"
-              >
-                {availablePlatforms.length > 0 ? (
-                  availablePlatforms.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">All platforms added</option>
-                )}
-              </select>
-            </div>
-            <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">URL</label>
+      <div className="flex-1 min-w-0 max-w-3xl">
+        <nav
+          className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3"
+          aria-label="Profile section"
+        >
+          <span>Profile</span>
+          <ChevronRight className="w-3 h-3 shrink-0" />
+          <span className="text-gray-600">{sectionMeta?.label}</span>
+        </nav>
+
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Profile</h1>
+        <p className="text-gray-600 mb-2">{sectionMeta?.description}</p>
+
+        {mergeError && (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800 mb-4">
+            {mergeError}
+          </div>
+        )}
+
+        {activeProfileSection === "personal" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4 mt-4">
+            <h3 className="font-semibold text-gray-900">Personal information</h3>
+            {validationErrors.length > 0 && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+                <span className="font-medium">
+                  {missingFields.length > 0 ? "Please fill in all required fields" : "Please fix the following"}:{" "}
+                </span>
+                {validationErrors.join(", ")}
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Full name <span className="text-red-500">*</span>
+              </label>
               <input
-                type="url"
-                placeholder={
-                  SOCIAL_PLATFORMS.find((p) => p.id === selectedPlatform)?.placeholder ?? "https://..."
-                }
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm"
+                type="text"
+                placeholder="Your name"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  setValidationErrors([]);
+                }}
+                required
+                className={`w-full px-4 py-2 rounded-lg border text-sm ${!fullName.trim() && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setValidationErrors([]);
+                }}
+                required
+                className={`w-full px-4 py-2 rounded-lg border text-sm ${(!email.trim() || !isValidEmail(email)) && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setValidationErrors([]);
+                }}
+                required
+                className={`w-full px-4 py-2 rounded-lg border text-sm ${(!phone.trim() || !isValidPhone(phone)) && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Industry <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={industry}
+                onChange={(e) => {
+                  setIndustry(e.target.value);
+                  setValidationErrors([]);
+                }}
+                required
+                className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!industry && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
+              >
+                <option value="">Select your industry</option>
+                {INDUSTRY_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Job <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={job}
+                onChange={(e) => {
+                  setJob(e.target.value);
+                  setValidationErrors([]);
+                }}
+                required
+                className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!job && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
+              >
+                <option value="">Select your job</option>
+                {JOB_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={role}
+                onChange={(e) => {
+                  setRole(e.target.value);
+                  setValidationErrors([]);
+                }}
+                required
+                className={`w-full px-4 py-2 rounded-lg border text-sm bg-white ${!role && validationErrors.length > 0 ? "border-red-300" : "border-gray-200"}`}
+              >
+                <option value="">Select your role</option>
+                {ROLE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={!isComplete}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Save personal info
+              </button>
+              {savedFeedback && activeProfileSection === "personal" && (
+                <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={addProfile}
-            disabled={!urlInput.trim() || availablePlatforms.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4" />
-            Add profile
-          </button>
+        )}
 
-          <div className="pt-4 border-t border-gray-100">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Your profiles</h4>
-            {addedProfiles.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">No profiles added yet. Choose a platform and URL above.</p>
-            ) : (
-              <ul className="space-y-2">
-                {addedProfiles.map((profile) => {
-                  const platform = SOCIAL_PLATFORMS.find((p) => p.id === profile.platformId);
-                  return (
-                    <li
-                      key={profile.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-                        <SocialLogo platformId={profile.platformId} className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{platform?.label ?? profile.platformId}</p>
-                        <a
-                          href={profile.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-sv-blue hover:underline truncate block"
-                        >
-                          {profile.url}
-                        </a>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeProfile(profile.id)}
-                        className="text-sm text-red-600 hover:text-red-700 font-medium shrink-0"
+        {activeProfileSection === "social-marketing" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5 mt-4">
+            <h3 className="font-semibold text-gray-900">Social & marketing</h3>
+            <p className="text-sm text-gray-500">
+              Add your social profiles to connect with clients and support your marketing and sales efforts.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Choose platform</label>
+                <select
+                  value={selectedPlatform}
+                  onChange={(e) => setSelectedPlatform(e.target.value as SocialId)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  {availablePlatforms.length > 0 ? (
+                    availablePlatforms.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">All platforms added</option>
+                  )}
+                </select>
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">URL</label>
+                <input
+                  type="url"
+                  placeholder={
+                    SOCIAL_PLATFORMS.find((p) => p.id === selectedPlatform)?.placeholder ?? "https://..."
+                  }
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={addProfile}
+              disabled={!urlInput.trim() || availablePlatforms.length === 0}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4" />
+              Add profile
+            </button>
+
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Your profiles</h4>
+              {addedProfiles.length === 0 ? (
+                <p className="text-sm text-gray-500 py-4">No profiles added yet. Choose a platform and URL above.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {addedProfiles.map((profile) => {
+                    const platform = SOCIAL_PLATFORMS.find((p) => p.id === profile.platformId);
+                    return (
+                      <li
+                        key={profile.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100"
                       >
-                        Remove
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
+                        <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                          <SocialLogo platformId={profile.platformId} className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{platform?.label ?? profile.platformId}</p>
+                          <a
+                            href={profile.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-sv-blue hover:underline truncate block"
+                          >
+                            {profile.url}
+                          </a>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeProfile(profile.id)}
+                          className="text-sm text-red-600 hover:text-red-700 font-medium shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
 
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={handleSaveProfile}
-            disabled={!isComplete}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save className="w-4 h-4" />
-            Save profile
-          </button>
-          {savedFeedback && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-600">
-              <CheckCircle2 className="w-4 h-4" />
-              Saved
-            </span>
-          )}
-        </div>
+            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleSaveSocialProfiles}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl"
+              >
+                <Save className="w-4 h-4" />
+                Save social profiles
+              </button>
+              {savedFeedback && activeProfileSection === "social-marketing" && (
+                <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeProfileSection === "security" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6 mt-4">
+            <h3 className="font-semibold text-gray-900">Security</h3>
+            <p className="text-sm text-gray-500">
+              Portal sign-in uses your email and password or a linked provider. Full password change and device
+              management will connect to your auth backend when enabled.
+            </p>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <div className="grid sm:grid-cols-2 gap-3 opacity-60 pointer-events-none">
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  disabled
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50"
+                />
+                <input
+                  type="password"
+                  placeholder="New password"
+                  disabled
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50"
+                />
+              </div>
+              <p className="text-xs text-gray-500">Password updates are disabled in bypass / mock mode.</p>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-4">
+              <Checkbox
+                id="two-factor"
+                checked={twoFactorEnabled}
+                onCheckedChange={(c) => setTwoFactorEnabled(c === true)}
+              />
+              <div className="space-y-1">
+                <label htmlFor="two-factor" className="text-sm font-medium text-gray-900 cursor-pointer">
+                  Two-factor authentication (2FA)
+                </label>
+                <p className="text-xs text-gray-500">
+                  Require a second step at sign-in. Preference is stored locally until your identity provider supports
+                  it.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-4">
+              <Checkbox
+                id="session-alerts"
+                checked={sessionAlertEmail}
+                onCheckedChange={(c) => setSessionAlertEmail(c === true)}
+              />
+              <div className="space-y-1">
+                <label htmlFor="session-alerts" className="text-sm font-medium text-gray-900 cursor-pointer">
+                  Email me when a new device signs in
+                </label>
+                <p className="text-xs text-gray-500">Security alerts for unrecognized browsers or locations.</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-dashed border-gray-200 p-4">
+              <p className="text-sm font-medium text-gray-900 mb-1">Active sessions</p>
+              <p className="text-xs text-gray-500">
+                Session list and “Sign out everywhere” will appear here when connected to your auth service.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleSaveSecurityAccount}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl"
+              >
+                <Save className="w-4 h-4" />
+                Save security settings
+              </button>
+              {savedFeedback && activeProfileSection === "security" && (
+                <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeProfileSection === "account" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6 mt-4">
+            <h3 className="font-semibold text-gray-900">Account</h3>
+            <p className="text-sm text-gray-500">
+              Control how we communicate with you and manage your account data.
+            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Language & region</label>
+              <select
+                value={preferredLanguage}
+                onChange={(e) => setPreferredLanguage(e.target.value)}
+                className="w-full max-w-md px-4 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+              >
+                <option value="en-US">English (United States)</option>
+                <option value="en-GB">English (United Kingdom)</option>
+                <option value="es-US">Español (US)</option>
+                <option value="fr-CA">Français (Canada)</option>
+              </select>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="email-product"
+                  checked={emailProductUpdates}
+                  onCheckedChange={(c) => setEmailProductUpdates(c === true)}
+                />
+                <div>
+                  <label htmlFor="email-product" className="text-sm font-medium text-gray-900 cursor-pointer">
+                    Product & portal updates
+                  </label>
+                  <p className="text-xs text-gray-500">Important changes to workflows, billing, and the client portal.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="email-marketing"
+                  checked={emailMarketing}
+                  onCheckedChange={(c) => setEmailMarketing(c === true)}
+                />
+                <div>
+                  <label htmlFor="email-marketing" className="text-sm font-medium text-gray-900 cursor-pointer">
+                    Tips & marketing
+                  </label>
+                  <p className="text-xs text-gray-500">Best practices, feature ideas, and occasional promotional email.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-100 bg-gray-50/80 p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-900">Your data</p>
+              <p className="text-xs text-gray-500">
+                Request an export of profile, leads, and workflow settings stored for your account (subject to backend
+                availability).
+              </p>
+              <Button type="button" variant="outline" size="sm" disabled className="text-xs">
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Download my data (coming soon)
+              </Button>
+            </div>
+
+            <div className="rounded-lg border border-red-100 bg-red-50/40 p-4 space-y-2">
+              <p className="text-sm font-medium text-red-900">Delete account</p>
+              <p className="text-xs text-red-800/80">
+                Permanently remove your portal access and schedule deletion of associated data. This cannot be undone.
+              </p>
+              <Button type="button" variant="outline" size="sm" disabled className="text-xs border-red-200 text-red-800 hover:bg-red-50">
+                Delete account (contact support)
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleSaveSecurityAccount}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl"
+              >
+                <Save className="w-4 h-4" />
+                Save account preferences
+              </button>
+              {savedFeedback && activeProfileSection === "account" && (
+                <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1993,6 +3971,81 @@ function dateToYYYYMMDD(d: Date): string {
 }
 
 type BookingCalendarConfig = { sourceIds: string[]; defaultId?: string };
+
+type BookingAppointment = {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  notes?: string;
+};
+
+type BookingSubSectionId = "calendar" | "settings" | "timeSlots" | "crmCalendars";
+
+const bookingSubSections: {
+  id: BookingSubSectionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "calendar",
+    label: "Calendar",
+    shortLabel: "Calendar",
+    description: "Month view of appointments and events; add bookings and see how they line up with your slots.",
+    icon: CalendarDays,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    shortLabel: "Settings",
+    description: "Defaults for meeting length, buffers, and time zone — used when you share links and suggest times.",
+    icon: Settings2,
+  },
+  {
+    id: "timeSlots",
+    label: "Time slots",
+    shortLabel: "Slots",
+    description: "Slots you’re actively seeking to fill — not passive availability.",
+    icon: Clock,
+  },
+  {
+    id: "crmCalendars",
+    label: "CRM & calendars",
+    shortLabel: "CRM",
+    description:
+      "Which calendars feed availability, scheduling links, CRM sync, and future calendar↔CRM automations.",
+    icon: Database,
+  },
+];
+
+function loadBookingAppointments(): BookingAppointment[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.bookingAppointments);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as unknown;
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter((x): x is Record<string, unknown> => x !== null && typeof x === "object")
+      .map((x) => ({
+        id: String(x.id ?? crypto.randomUUID()),
+        title: String(x.title ?? "Appointment"),
+        date: String(x.date ?? ""),
+        startTime: String(x.startTime ?? "09:00"),
+        endTime: String(x.endTime ?? "10:00"),
+        notes: x.notes ? String(x.notes) : undefined,
+      }))
+      .filter((a) => a.date.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function saveBookingAppointments(next: BookingAppointment[]) {
+  localStorage.setItem(STORAGE_KEYS.bookingAppointments, JSON.stringify(next));
+}
 
 function BookingsContent({ onNavigateToSection }: { onNavigateToSection?: (section: SectionId) => void }) {
   const [calendarConfig, setCalendarConfig] = useState<BookingCalendarConfig>(() => {
@@ -2057,6 +4110,27 @@ function BookingsContent({ onNavigateToSection }: { onNavigateToSection?: (secti
     endTime: "17:00",
   });
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [activeBookingTab, setActiveBookingTab] = useState<BookingSubSectionId>("calendar");
+  const [appointments, setAppointments] = useState<BookingAppointment[]>(() => loadBookingAppointments());
+  const [calendarMonthMain, setCalendarMonthMain] = useState<Date>(() => new Date());
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<Date | undefined>(() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t;
+  });
+  const [apptDialogOpen, setApptDialogOpen] = useState(false);
+  const [apptForm, setApptForm] = useState({
+    title: "",
+    date: "",
+    startTime: "09:00",
+    endTime: "10:00",
+    notes: "",
+  });
+  const [defaultDurationMin, setDefaultDurationMin] = useState(60);
+  const [bookingBufferMin, setBookingBufferMin] = useState(15);
+  const [bookingTimezone, setBookingTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York"
+  );
 
   const handleSaveAvailability = () => {
     localStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(blocks));
@@ -2088,342 +4162,695 @@ function BookingsContent({ onNavigateToSection }: { onNavigateToSection?: (secti
   };
 
   const datesWithSlots = new Set(blocks.map((b) => b.date));
+  const datesWithAppointments = new Set(appointments.map((a) => a.date));
+  const selectedYmd = calendarSelectedDate ? dateToYYYYMMDD(calendarSelectedDate) : null;
+  const dayAppointments = selectedYmd ? appointments.filter((a) => a.date === selectedYmd) : [];
+  const daySlots = selectedYmd ? blocks.filter((b) => b.date === selectedYmd) : [];
+
+  const openAddAppointmentDialog = (presetDate?: string) => {
+    const d = presetDate ?? selectedYmd ?? "";
+    setApptForm({
+      title: "",
+      date: d,
+      startTime: "09:00",
+      endTime: "10:00",
+      notes: "",
+    });
+    setApptDialogOpen(true);
+  };
+
+  const addAppointmentSubmit = () => {
+    if (!apptForm.title.trim() || !apptForm.date) return;
+    const [sh, sm] = apptForm.startTime.split(":").map(Number);
+    const [eh, em] = apptForm.endTime.split(":").map(Number);
+    if (eh * 60 + em <= sh * 60 + sm) return;
+    const next: BookingAppointment[] = [
+      ...appointments,
+      {
+        id: crypto.randomUUID(),
+        title: apptForm.title.trim(),
+        date: apptForm.date,
+        startTime: apptForm.startTime,
+        endTime: apptForm.endTime,
+        notes: apptForm.notes.trim() || undefined,
+      },
+    ];
+    setAppointments(next);
+    saveBookingAppointments(next);
+    setApptDialogOpen(false);
+    setApptForm({ title: "", date: "", startTime: "09:00", endTime: "10:00", notes: "" });
+  };
+
+  const removeAppointment = (id: string) => {
+    const next = appointments.filter((a) => a.id !== id);
+    setAppointments(next);
+    saveBookingAppointments(next);
+  };
+
+  const bookingSectionMeta = bookingSubSections.find((s) => s.id === activeBookingTab);
+
+  const BookingSubNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
+        Booking
+      </p>
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        {bookingSubSections.map((sec) => {
+          const Icon = sec.icon;
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => setActiveBookingTab(sec.id)}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeBookingTab === sec.id
+                  ? "bg-sv-blue/10 text-sv-blue"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{sec.shortLabel}</span>
+              <span className="hidden lg:inline">{sec.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
 
   return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Time slots</h1>
-      <p className="text-gray-600 mb-4">
-        Add time slots you're actively seeking to fill with appointments — these are slots you want booked, not general availability.
-      </p>
-      <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 mb-8 text-sm text-amber-900">
-        <strong>Note:</strong> These are time slots being pursued to be filled with bookings, not passive availability.
-      </div>
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {BookingSubNav}
+      </aside>
 
-      <div className="max-w-4xl space-y-6">
-        {/* Calendar sources — use connected calendar apps for availability */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-sv-blue" />
-            Calendar sources
-          </h3>
-          <p className="text-sm text-gray-500">
-            Use connected calendar apps for availability. Select which calendars to use and set a default. Connect calendars in Integrations first.
-          </p>
-          {connectedCalendars.length === 0 ? (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
-              <p className="text-sm text-gray-600">No calendar apps connected yet.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onNavigateToSection?.("integrations")}
-                className="shrink-0"
-              >
-                <Plug2 className="w-4 h-4 mr-1.5" />
-                Connect calendars
-              </Button>
+      <div className="flex-1 min-w-0 max-w-4xl">
+        <nav className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3" aria-hidden>
+          <span>Booking</span>
+          <ChevronRight className="w-3 h-3 shrink-0" />
+          <span className="text-gray-600">{bookingSectionMeta?.label}</span>
+        </nav>
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Booking</h1>
+        <p className="text-gray-600 mb-6 max-w-2xl">{bookingSectionMeta?.description}</p>
+
+        {activeBookingTab === "calendar" && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+              <span className="inline-flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-violet-300 ring-2 ring-violet-400" aria-hidden />
+                Appointment / event
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-sv-blue/25 ring-2 ring-sv-blue/40" aria-hidden />
+                Open time slot
+              </span>
             </div>
-          ) : (
-            <ul className="space-y-3">
-              {connectedCalendars.map((cal) => {
-                const isSelected = calendarConfig.sourceIds.includes(cal.id);
-                const isDefault = calendarConfig.defaultId === cal.id;
-                return (
-                  <li
-                    key={cal.id}
-                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50/50"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Checkbox
-                        id={`cal-${cal.id}`}
-                        checked={isSelected}
-                        onCheckedChange={() => toggleCalendarSource(cal.id)}
-                      />
-                      <label htmlFor={`cal-${cal.id}`} className="text-sm font-medium text-gray-900 cursor-pointer truncate">
-                        {cal.label}
-                      </label>
-                      {isSelected && (
-                        <Button
-                          variant={isDefault ? "secondary" : "ghost"}
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => setDefaultCalendar(cal.id)}
-                        >
-                          {isDefault ? "Default" : "Set as default"}
-                        </Button>
+
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+                <Calendar
+                  mode="single"
+                  month={calendarMonthMain}
+                  onMonthChange={setCalendarMonthMain}
+                  selected={calendarSelectedDate}
+                  onSelect={(d) => setCalendarSelectedDate(d ?? undefined)}
+                  modifiers={{
+                    hasSlots: (d) => datesWithSlots.has(dateToYYYYMMDD(d)),
+                    hasAppt: (d) => datesWithAppointments.has(dateToYYYYMMDD(d)),
+                  }}
+                  modifiersClassNames={{
+                    hasSlots: "bg-sv-blue/15 text-sv-blue font-medium ring-2 ring-sv-blue/35",
+                    hasAppt: "bg-violet-200/90 text-violet-900 font-semibold ring-2 ring-violet-400",
+                  }}
+                />
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-4 w-full">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="font-semibold text-gray-900">
+                    {calendarSelectedDate && selectedYmd
+                      ? formatDateMMDDYYYY(selectedYmd)
+                      : "Select a date"}
+                  </h2>
+                  <Button type="button" size="sm" onClick={() => openAddAppointmentDialog()}>
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Add event
+                  </Button>
+                </div>
+
+                {calendarSelectedDate ? (
+                  <>
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Appointments & events
+                      </h3>
+                      {dayAppointments.length === 0 ? (
+                        <p className="text-sm text-gray-500 py-2">Nothing scheduled this day.</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {dayAppointments.map((a) => (
+                            <li
+                              key={a.id}
+                              className="flex items-start justify-between gap-3 p-3 rounded-lg border border-violet-100 bg-violet-50/50"
+                            >
+                              <div className="min-w-0">
+                                <p className="font-medium text-gray-900 text-sm">{a.title}</p>
+                                <p className="text-xs text-gray-600 mt-0.5">
+                                  {formatTime(a.startTime)} – {formatTime(a.endTime)} (
+                                  {formatDuration(a.startTime, a.endTime)})
+                                </p>
+                                {a.notes ? (
+                                  <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap">{a.notes}</p>
+                                ) : null}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeAppointment(a.id)}
+                                className="text-xs text-red-600 hover:text-red-700 font-medium shrink-0"
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
                       )}
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        {/* Add time slot form */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900">Add time slot</h3>
-          <p className="text-sm text-gray-500">
-            Choose a date (MM/DD/YYYY) and start/end time for a slot you want to fill.
-          </p>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date (MM/DD/YYYY)</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={`w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-left bg-white hover:border-gray-300 transition-colors ${!form.date ? "text-gray-400" : ""}`}
-                  >
-                    {form.date ? formatDateMMDDYYYY(form.date) : "MM/DD/YYYY"}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={form.date ? new Date(form.date + "T12:00:00") : undefined}
-                    onSelect={(d) => {
-                      if (d) setForm({ ...form, date: dateToYYYYMMDD(d) });
-                    }}
-                    disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              {form.date && (
-                <p className="text-xs text-gray-500 mt-1">Selected: {formatDateMMDDYYYY(form.date)}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
-              <input
-                type="time"
-                value={form.startTime}
-                onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End time</label>
-              <input
-                type="time"
-                value={form.endTime}
-                onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm"
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={addBlock}
-            disabled={!form.date}
-            className="px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Add time slot
-          </button>
-        </div>
-
-        {/* View toggle & slots section */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h3 className="font-semibold text-gray-900">Your time slots</h3>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSaveAvailability}
-                disabled={blocks.length === 0}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                Save availability
-              </button>
-              {savedFeedback && (
-                <span className="flex items-center gap-1 text-sm text-emerald-600">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Saved
-                </span>
-              )}
-            </div>
-            <div className="flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
-              <button
-                type="button"
-                onClick={() => setView("list")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  view === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <List className="w-4 h-4" />
-                List
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("calendar")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  view === "calendar" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <CalendarDays className="w-4 h-4" />
-                Calendar
-              </button>
-            </div>
-          </div>
-
-          {blocks.length === 0 ? (
-            <p className="text-sm text-gray-500 py-8">
-              No time slots yet. Add one above to start pursuing bookings.
-            </p>
-          ) : view === "list" ? (
-            <ul className="space-y-3">
-              {blocks.map((block) => (
-                <li
-                  key={block.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{formatDateMMDDYYYY(block.date)}</p>
-                    <p className="text-sm text-gray-600">
-                      {formatTime(block.startTime)} – {formatTime(block.endTime)}
-                      <span className="text-gray-500 ml-1">
-                        ({formatDuration(block.startTime, block.endTime)})
-                      </span>
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeBlock(block.id)}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="pt-2">
-              <Calendar
-                mode="single"
-                month={calendarMonth}
-                onMonthChange={setCalendarMonth}
-                modifiers={{
-                  hasSlots: (d) => datesWithSlots.has(dateToYYYYMMDD(d)),
-                }}
-                modifiersClassNames={{
-                  hasSlots: "bg-sv-blue/20 text-sv-blue font-medium ring-2 ring-sv-blue/40",
-                }}
-              />
-              <p className="text-xs text-gray-500 mt-3">Dates with time slots are highlighted.</p>
-              <div className="mt-4 space-y-2">
-                {Array.from(datesWithSlots)
-                  .sort()
-                  .slice(0, 5)
-                  .map((d) => (
-                    <div key={d} className="text-sm text-gray-600">
-                      <strong>{formatDateMMDDYYYY(d)}:</strong>{" "}
-                      {blocks
-                        .filter((b) => b.date === d)
-                        .map((b) => `${formatTime(b.startTime)}–${formatTime(b.endTime)}`)
-                        .join(", ")}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Open slots (seeking bookings)
+                      </h3>
+                      {daySlots.length === 0 ? (
+                        <p className="text-sm text-gray-500 py-2">No open slots on this day.</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {daySlots.map((b) => (
+                            <li
+                              key={b.id}
+                              className="p-3 rounded-lg border border-sv-blue/20 bg-sv-blue/5 text-sm text-gray-800"
+                            >
+                              {formatTime(b.startTime)} – {formatTime(b.endTime)} (
+                              {formatDuration(b.startTime, b.endTime)})
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                  ))}
-                {datesWithSlots.size > 5 && (
-                  <p className="text-xs text-gray-500">+{datesWithSlots.size - 5} more dates with slots</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">Choose a day on the calendar to see details.</p>
                 )}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Appointment Scheduling — manual tool, not a workflow */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-sv-blue" />
-            Appointment Scheduling
-          </h3>
-          <p className="text-sm text-gray-500">
-            Send scheduling links to prospects and add meetings to calendars. Run manually when needed — not an automated workflow.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Default duration</label>
-              <select className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white">
-                <option>15 min</option>
-                <option>30 min</option>
-                <option selected>60 min</option>
-              </select>
+        {activeBookingTab === "settings" && (
+          <div className="max-w-4xl space-y-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-sv-blue" />
+                Scheduling defaults
+              </h3>
+              <p className="text-sm text-gray-500">Used when generating links and suggested meeting lengths.</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Default meeting length</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                    value={defaultDurationMin}
+                    onChange={(e) => setDefaultDurationMin(Number(e.target.value))}
+                  >
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                    <option value={60}>60 min</option>
+                    <option value={90}>90 min</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Buffer between meetings</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+                    value={bookingBufferMin}
+                    onChange={(e) => setBookingBufferMin(Number(e.target.value))}
+                  >
+                    <option value={0}>None</option>
+                    <option value={5}>5 min</option>
+                    <option value={10}>10 min</option>
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                  </select>
+                </div>
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time zone</label>
+                  <Input
+                    value={bookingTimezone}
+                    onChange={(e) => setBookingTimezone(e.target.value)}
+                    placeholder="e.g. America/New_York"
+                    className="text-sm"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Scheduling tool</label>
-              <select
-                className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white w-full min-w-[180px]"
-                value={calendarConfig.defaultId ?? (calendarConfig.sourceIds[0] ?? "")}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  if (id) {
-                    setDefaultCalendar(id);
-                    if (!calendarConfig.sourceIds.includes(id)) toggleCalendarSource(id);
-                  }
-                }}
+          </div>
+        )}
+
+        {activeBookingTab === "crmCalendars" && (
+          <div className="max-w-4xl space-y-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-sv-blue" />
+                Calendar sources
+              </h3>
+              <p className="text-sm text-gray-500">
+                Select which connected calendars feed availability and pick a default. Connect apps in Integrations
+                first.
+              </p>
+              {connectedCalendars.length === 0 ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
+                  <p className="text-sm text-gray-600">No calendar apps connected yet.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onNavigateToSection?.("integrations")}
+                    className="shrink-0"
+                  >
+                    <Plug2 className="w-4 h-4 mr-1.5" />
+                    Connect calendars
+                  </Button>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {connectedCalendars.map((cal) => {
+                    const isSelected = calendarConfig.sourceIds.includes(cal.id);
+                    const isDefault = calendarConfig.defaultId === cal.id;
+                    return (
+                      <li
+                        key={cal.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50/50"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Checkbox
+                            id={`cal-crm-${cal.id}`}
+                            checked={isSelected}
+                            onCheckedChange={() => toggleCalendarSource(cal.id)}
+                          />
+                          <label
+                            htmlFor={`cal-crm-${cal.id}`}
+                            className="text-sm font-medium text-gray-900 cursor-pointer truncate"
+                          >
+                            {cal.label}
+                          </label>
+                          {isSelected && (
+                            <Button
+                              variant={isDefault ? "secondary" : "ghost"}
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setDefaultCalendar(cal.id)}
+                            >
+                              {isDefault ? "Default" : "Set as default"}
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-sv-blue" />
+                Appointment scheduling
+              </h3>
+              <p className="text-sm text-gray-500">
+                Send scheduling links manually when needed — not an automated workflow.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Scheduling tool</label>
+                  <select
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white w-full min-w-[180px]"
+                    value={calendarConfig.defaultId ?? (calendarConfig.sourceIds[0] ?? "")}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      if (id) {
+                        setDefaultCalendar(id);
+                        if (!calendarConfig.sourceIds.includes(id)) toggleCalendarSource(id);
+                      }
+                    }}
+                  >
+                    <option value="">Select calendar...</option>
+                    {(calendarConfig.sourceIds.length > 0
+                      ? calendarConfig.sourceIds
+                      : connectedCalendars.map((c) => c.id)
+                    ).map((sid) => {
+                      const cal =
+                        connectedCalendars.find((c) => c.id === sid) ??
+                        CALENDAR_APPS.find((c) => c.id === sid) ?? { id: sid, label: sid };
+                      return (
+                        <option key={cal.id} value={cal.id}>
+                          {cal.label}
+                          {calendarConfig.defaultId === cal.id ? " (default)" : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  {connectedCalendars.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">Connect calendars in Integrations first.</p>
+                  )}
+                  {connectedCalendars.length > 0 && calendarConfig.sourceIds.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">Select at least one calendar source in the list above.</p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-medium rounded-xl"
               >
-                <option value="">Select calendar...</option>
-                {(calendarConfig.sourceIds.length > 0 ? calendarConfig.sourceIds : connectedCalendars.map((c) => c.id)).map((sid) => {
-                  const cal = connectedCalendars.find((c) => c.id === sid) ?? CALENDAR_APPS.find((c) => c.id === sid) ?? { id: sid, label: sid };
-                  return (
-                    <option key={cal.id} value={cal.id}>
-                      {cal.label}{calendarConfig.defaultId === cal.id ? " (default)" : ""}
-                    </option>
-                  );
-                })}
-              </select>
-              {connectedCalendars.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Connect calendars in Integrations first.
+                <Link2 className="w-4 h-4" />
+                Open scheduling link
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <RefreshCw className="w-5 h-5 text-sv-blue" />
+                CRM sync
+              </h3>
+              <p className="text-sm text-gray-500">
+                Sync bookings and meetings to your CRM when integrations are connected.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <select className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white min-w-[160px]">
+                  <option>Select CRM...</option>
+                  <option>HubSpot</option>
+                  <option>Pipedrive</option>
+                  <option>Salesforce</option>
+                </select>
+                <Button type="button" variant="outline" size="sm" className="gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  Sync now
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => onNavigateToSection?.("integrations")}>
+                  Manage integrations
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-6 space-y-4">
+              <h3 className="font-semibold text-gray-900 text-sm">More calendar ↔ CRM (coming soon)</h3>
+              <p className="text-xs text-gray-500">
+                Placeholders for features we can wire when your stack is connected: push confirmed meetings as CRM
+                activities, create or update contacts from invitees, and two-way busy/free sync.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li className="flex items-center gap-2">
+                  <Checkbox disabled id="soon-activities" />
+                  <label htmlFor="soon-activities" className="text-gray-500">
+                    Log calendar events as CRM activities / tasks
+                  </label>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Checkbox disabled id="soon-contacts" />
+                  <label htmlFor="soon-contacts" className="text-gray-500">
+                    Auto-create or link contacts from meeting guests
+                  </label>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Checkbox disabled id="soon-bidirectional" />
+                  <label htmlFor="soon-bidirectional" className="text-gray-500">
+                    Bidirectional free/busy with CRM-owned holds
+                  </label>
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {activeBookingTab === "timeSlots" && (
+          <div className="max-w-4xl space-y-6">
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
+              <strong>Note:</strong> These are time slots you&apos;re pursuing to fill — not passive availability.
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+              <h3 className="font-semibold text-gray-900">Add time slot</h3>
+              <p className="text-sm text-gray-500">
+                Choose a date and start/end time for a slot you want booked.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={`w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-left bg-white hover:border-gray-300 transition-colors ${!form.date ? "text-gray-400" : ""}`}
+                      >
+                        {form.date ? formatDateMMDDYYYY(form.date) : "Pick a date"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={form.date ? new Date(form.date + "T12:00:00") : undefined}
+                        onSelect={(d) => {
+                          if (d) setForm({ ...form, date: dateToYYYYMMDD(d) });
+                        }}
+                        disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
+                  <input
+                    type="time"
+                    value={form.startTime}
+                    onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End time</label>
+                  <input
+                    type="time"
+                    value={form.endTime}
+                    onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={addBlock}
+                disabled={!form.date}
+                className="px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add time slot
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h3 className="font-semibold text-gray-900">Your time slots</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleSaveAvailability}
+                    disabled={blocks.length === 0}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save availability
+                  </button>
+                  {savedFeedback && (
+                    <span className="flex items-center gap-1 text-sm text-emerald-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Saved
+                    </span>
+                  )}
+                  <div className="flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setView("list")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        view === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <List className="w-4 h-4" />
+                      List
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setView("calendar")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        view === "calendar" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <CalendarDays className="w-4 h-4" />
+                      Mini calendar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {blocks.length === 0 ? (
+                <p className="text-sm text-gray-500 py-8">
+                  No time slots yet. Add one above to start pursuing bookings.
                 </p>
-              )}
-              {connectedCalendars.length > 0 && calendarConfig.sourceIds.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Select a calendar above, or configure sources in the section above.
-                </p>
+              ) : view === "list" ? (
+                <ul className="space-y-3">
+                  {blocks.map((block) => (
+                    <li
+                      key={block.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{formatDateMMDDYYYY(block.date)}</p>
+                        <p className="text-sm text-gray-600">
+                          {formatTime(block.startTime)} – {formatTime(block.endTime)}
+                          <span className="text-gray-500 ml-1">
+                            ({formatDuration(block.startTime, block.endTime)})
+                          </span>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeBlock(block.id)}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="pt-2">
+                  <Calendar
+                    mode="single"
+                    month={calendarMonth}
+                    onMonthChange={setCalendarMonth}
+                    modifiers={{
+                      hasSlots: (d) => datesWithSlots.has(dateToYYYYMMDD(d)),
+                    }}
+                    modifiersClassNames={{
+                      hasSlots: "bg-sv-blue/20 text-sv-blue font-medium ring-2 ring-sv-blue/40",
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-3">Dates with time slots are highlighted.</p>
+                  <div className="mt-4 space-y-2">
+                    {Array.from(datesWithSlots)
+                      .sort()
+                      .slice(0, 8)
+                      .map((d) => (
+                        <div key={d} className="text-sm text-gray-600">
+                          <strong>{formatDateMMDDYYYY(d)}:</strong>{" "}
+                          {blocks
+                            .filter((b) => b.date === d)
+                            .map((b) => `${formatTime(b.startTime)}–${formatTime(b.endTime)}`)
+                            .join(", ")}
+                        </div>
+                      ))}
+                    {datesWithSlots.size > 8 && (
+                      <p className="text-xs text-gray-500">+{datesWithSlots.size - 8} more dates with slots</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
-          >
-            <Link2 className="w-4 h-4" />
-            Open scheduling link
-          </button>
-        </div>
+        )}
 
-        {/* CRM Sync — contextual to bookings */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-sv-blue" />
-            CRM Sync
-          </h3>
-          <p className="text-sm text-gray-500">
-            Sync bookings and meetings to your connected CRM. Keep deal stages and activities in sync.
-          </p>
-          <div className="flex items-center gap-3">
-            <select className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white">
-              <option>Select CRM...</option>
-              <option>HubSpot</option>
-              <option>Pipedrive</option>
-              <option>Salesforce</option>
-            </select>
-            <button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-sv-blue hover:text-sv-blue-light border border-sv-blue rounded-lg transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Sync now
-            </button>
-          </div>
-        </div>
+        <Dialog open={apptDialogOpen} onOpenChange={setApptDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add appointment or event</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label htmlFor="appt-title">Title</Label>
+                <Input
+                  id="appt-title"
+                  value={apptForm.title}
+                  onChange={(e) => setApptForm({ ...apptForm, title: e.target.value })}
+                  placeholder="e.g. Discovery call — Acme Corp"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={`mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-left bg-white hover:border-gray-300 ${!apptForm.date ? "text-gray-400" : ""}`}
+                    >
+                      {apptForm.date ? formatDateMMDDYYYY(apptForm.date) : "Pick a date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={apptForm.date ? new Date(apptForm.date + "T12:00:00") : undefined}
+                      onSelect={(d) => {
+                        if (d) setApptForm({ ...apptForm, date: dateToYYYYMMDD(d) });
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="appt-start">Start</Label>
+                  <Input
+                    id="appt-start"
+                    type="time"
+                    value={apptForm.startTime}
+                    onChange={(e) => setApptForm({ ...apptForm, startTime: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="appt-end">End</Label>
+                  <Input
+                    id="appt-end"
+                    type="time"
+                    value={apptForm.endTime}
+                    onChange={(e) => setApptForm({ ...apptForm, endTime: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="appt-notes">Notes (optional)</Label>
+                <Textarea
+                  id="appt-notes"
+                  value={apptForm.notes}
+                  onChange={(e) => setApptForm({ ...apptForm, notes: e.target.value })}
+                  rows={3}
+                  className="mt-1 text-sm"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setApptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={addAppointmentSubmit} disabled={!apptForm.title.trim() || !apptForm.date}>
+                Save event
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
@@ -2474,7 +4901,35 @@ const OBJECTIVE_OPTIONS = ["Awareness", "Engagement", "Leads", "Conversions", "T
 const META_PLACEMENTS = ["Feed", "Stories", "Reels", "Explore", "Messenger"];
 const GOOGLE_TYPES = ["Search", "Display", "Performance Max", "YouTube"];
 
+type CampaignSubSectionId = "existing" | "adding";
+
+const campaignSubSections: {
+  id: CampaignSubSectionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "existing",
+    label: "Existing",
+    shortLabel: "Active",
+    description:
+      "Campaigns you've configured: review schedule, budget, AI options, save to this browser, or delete.",
+    icon: Megaphone,
+  },
+  {
+    id: "adding",
+    label: "Adding",
+    shortLabel: "Add",
+    description:
+      "Create a new campaign: pick a platform, name, schedule, budget, and automation. It appears under Existing when saved.",
+    icon: Plus,
+  },
+];
+
 function MarketingCampaignsContent() {
+  const [activeCampaignTab, setActiveCampaignTab] = useState<CampaignSubSectionId>("existing");
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.campaigns);
@@ -2485,7 +4940,6 @@ function MarketingCampaignsContent() {
     } catch {}
     return [];
   });
-  const [showAddForm, setShowAddForm] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<MarketingPlatformId | "">("");
   const [newCampaignName, setNewCampaignName] = useState("");
@@ -2509,7 +4963,7 @@ function MarketingCampaignsContent() {
     setSelectedPlatform("");
     setNewCampaignName("");
     setNewCampaignConfig({});
-    setShowAddForm(false);
+    setActiveCampaignTab("existing");
   };
 
   const updateCampaign = (id: string, updates: Partial<MarketingCampaign>) => {
@@ -2535,30 +4989,50 @@ function MarketingCampaignsContent() {
     setTimeout(() => setSavedFeedback(false), 2000);
   };
 
-  return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Marketing Campaigns</h1>
-      <p className="text-gray-600 mb-8">
-        Create and manage AI-powered social media and ad campaigns. Configure frequency, schedule, budgets, and automation for each platform.
-      </p>
+  const campaignSectionMeta = campaignSubSections.find((s) => s.id === activeCampaignTab);
 
-      <div className="max-w-5xl space-y-6">
-        {!showAddForm ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+  const CampaignsSubNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">Campaigns</p>
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        {campaignSubSections.map((sec) => {
+          const Icon = sec.icon;
+          return (
             <button
+              key={sec.id}
               type="button"
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-colors"
+              onClick={() => setActiveCampaignTab(sec.id)}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeCampaignTab === sec.id ? "bg-sv-blue/10 text-sv-blue" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
             >
-              <Plus className="w-5 h-5" />
-              Add campaign
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{sec.shortLabel}</span>
+              <span className="hidden lg:inline">{sec.label}</span>
             </button>
-            <p className="mt-3 text-xs text-gray-500">
-              Choose a platform, set your schedule and budget, and let AI optimize your campaign.
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6">
+          );
+        })}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {CampaignsSubNav}
+      </aside>
+
+      <div className="flex-1 min-w-0 max-w-5xl">
+        <nav className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3" aria-hidden>
+          <span>Campaigns</span>
+          <ChevronRight className="w-3 h-3 shrink-0" />
+          <span className="text-gray-600">{campaignSectionMeta?.label}</span>
+        </nav>
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Campaigns</h1>
+        <p className="text-gray-600 mb-6 max-w-2xl">{campaignSectionMeta?.description}</p>
+
+        {activeCampaignTab === "adding" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6 mb-6">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <Megaphone className="w-5 h-5 text-sv-blue" />
               New marketing campaign
@@ -2845,14 +5319,14 @@ function MarketingCampaignsContent() {
                     type="button"
                     onClick={addCampaign}
                     disabled={!newCampaignName.trim()}
-                    className="px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="sv-neo-btn sv-neo-btn--blue px-5 py-2.5 text-sm font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Create campaign
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setShowAddForm(false);
+                      setActiveCampaignTab("existing");
                       setSelectedPlatform("");
                       setNewCampaignName("");
                       setNewCampaignConfig({});
@@ -2864,38 +5338,69 @@ function MarketingCampaignsContent() {
                 </div>
               </>
             )}
+            {campaigns.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveCampaignTab("existing")}
+                className="text-sm font-medium text-sv-blue hover:text-sv-blue-light"
+              >
+                View {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""} in Existing →
+              </button>
+            )}
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Target className="w-5 h-5 text-gray-500" />
-              Your campaigns
-            </h3>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleSaveCampaigns}
-                disabled={campaigns.length === 0}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                Save
-              </button>
-              {savedFeedback && (
-                <span className="flex items-center gap-1 text-sm text-emerald-600">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Saved
+        {activeCampaignTab === "existing" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
+            {campaigns.length > 0 && (
+              <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-sv-blue/5 text-sv-blue border border-sv-blue/15">
+                  {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""}
                 </span>
-              )}
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <Target className="w-5 h-5 text-gray-500" />
+                Your campaigns
+              </h3>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveCampaignTab("adding")}
+                  className="sv-neo-btn sv-neo-btn--blue flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl"
+                >
+                  <Plus className="w-4 h-4" />
+                  New campaign
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCampaigns}
+                  disabled={campaigns.length === 0}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+                {savedFeedback && (
+                  <span className="flex items-center gap-1 text-sm text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Saved
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
           {campaigns.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 rounded-lg bg-gray-50 border border-dashed border-gray-200">
-              <Megaphone className="w-12 h-12 text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">No campaigns yet</p>
-              <p className="text-xs text-gray-400 mt-1">Add a campaign above to get started</p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-10 px-4 rounded-lg bg-gray-50 border border-dashed border-gray-200">
+              <Megaphone className="w-12 h-12 text-gray-300 shrink-0 mx-auto sm:mx-0" />
+              <div className="min-w-0 flex-1 text-center sm:text-left">
+                <p className="text-sm text-gray-600">No campaigns yet.</p>
+                <p className="text-xs text-gray-500 mt-1">Create one under Adding, then manage it here.</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" className="shrink-0 mx-auto sm:mx-0" onClick={() => setActiveCampaignTab("adding")}>
+                <Plus className="w-4 h-4" />
+                Go to Adding
+              </Button>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -2959,6 +5464,7 @@ function MarketingCampaignsContent() {
             </ul>
           )}
         </div>
+        )}
       </div>
     </div>
   );
@@ -3089,7 +5595,34 @@ type AddedIntegration = {
   connectedAccount?: string; // email or account name after auth
 };
 
+type IntegrationSubSectionId = "existing" | "adding";
+
+const integrationSubSections: {
+  id: IntegrationSubSectionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "existing",
+    label: "Existing",
+    shortLabel: "Active",
+    description:
+      "Connected integrations: sign in, permissions, which actions each tool handles, save changes, or disconnect.",
+    icon: Plug2,
+  },
+  {
+    id: "adding",
+    label: "Adding",
+    shortLabel: "Add",
+    description: "Browse the catalog and add a new integration. It appears under Existing for setup and authorization.",
+    icon: Plus,
+  },
+];
+
 function IntegrationsContent() {
+  const [activeIntegrationTab, setActiveIntegrationTab] = useState<IntegrationSubSectionId>("existing");
   const [addedIntegrations, setAddedIntegrations] = useState<AddedIntegration[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.integrations);
@@ -3124,27 +5657,13 @@ function IntegrationsContent() {
       },
     ]);
     setSelectedIntegration("");
+    setActiveIntegrationTab("existing");
   };
 
   const setConnectionStatus = (itemId: string, status: "pending_auth" | "connected", account?: string) => {
     setAddedIntegrations((prev) =>
       prev.map((i) =>
         i.id === itemId ? { ...i, connectionStatus: status, connectedAccount: account } : i
-      )
-    );
-  };
-
-  const toggleAction = (itemId: string, actionId: string) => {
-    setAddedIntegrations((prev) =>
-      prev.map((i) =>
-        i.id === itemId
-          ? {
-              ...i,
-              assignedActions: i.assignedActions.includes(actionId)
-                ? i.assignedActions.filter((a) => a !== actionId)
-                : [...i.assignedActions, actionId],
-            }
-          : i
       )
     );
   };
@@ -3156,67 +5675,135 @@ function IntegrationsContent() {
   const addedIds = new Set(addedIntegrations.map((i) => i.integrationId));
   const availableOptions = INTEGRATION_OPTIONS.filter((o) => !addedIds.has(o.id));
 
-  return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Integrations</h1>
-      <p className="text-gray-600 mb-8">
-        Connect your tools and platforms. Data will sync across your workflows.
-      </p>
+  const integrationSectionMeta = integrationSubSections.find((s) => s.id === activeIntegrationTab);
+  const connectedCount = addedIntegrations.filter((i) => i.connectionStatus === "connected").length;
+  const pendingAuthCount = addedIntegrations.filter((i) => i.connectionStatus === "pending_auth").length;
 
-      <div className="max-w-5xl space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Plus className="w-5 h-5 text-sv-blue" />
-            Add integration
-          </h3>
-          <p className="text-sm text-gray-500">
-            Choose an integration to connect. Connected tools will sync with your workflows, leads, and bookings.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select integration</label>
-              <select
-                value={selectedIntegration}
-                onChange={(e) => setSelectedIntegration(e.target.value as IntegrationId | "")}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white"
-              >
-                <option value="">Choose an integration...</option>
-                {availableOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label} — {opt.desc}
-                  </option>
-                ))}
-                {availableOptions.length === 0 && (
-                  <option value="">All integrations added</option>
-                )}
-              </select>
+  const IntegrationsSubNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">Integrations</p>
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        {integrationSubSections.map((sec) => {
+          const Icon = sec.icon;
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => setActiveIntegrationTab(sec.id)}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeIntegrationTab === sec.id ? "bg-sv-blue/10 text-sv-blue" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{sec.shortLabel}</span>
+              <span className="hidden lg:inline">{sec.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {IntegrationsSubNav}
+      </aside>
+
+      <div className="flex-1 min-w-0 max-w-5xl">
+        <nav className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3" aria-hidden>
+          <span>Integrations</span>
+          <ChevronRight className="w-3 h-3 shrink-0" />
+          <span className="text-gray-600">{integrationSectionMeta?.label}</span>
+        </nav>
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Integrations</h1>
+        <p className="text-gray-600 mb-6 max-w-2xl">{integrationSectionMeta?.description}</p>
+
+        {activeIntegrationTab === "adding" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5 mb-6">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Plus className="w-5 h-5 text-sv-blue" />
+              Add integration
+            </h3>
+            <p className="text-sm text-gray-500">
+              Choose a tool from the catalog. After you add it, open <strong>Existing</strong> to authorize and assign actions.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select integration</label>
+                <select
+                  value={selectedIntegration}
+                  onChange={(e) => setSelectedIntegration(e.target.value as IntegrationId | "")}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white"
+                >
+                  <option value="">Choose an integration...</option>
+                  {availableOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label} — {opt.desc}
+                    </option>
+                  ))}
+                  {availableOptions.length === 0 && <option value="">All integrations added</option>}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={addIntegration}
+                  disabled={!selectedIntegration}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
             </div>
-            <div className="flex items-end">
+            {availableOptions.length === 0 && addedIntegrations.length > 0 && (
+              <p className="text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                Every catalog integration is on your account. Manage them under <strong>Existing</strong>, or remove one there to
+                free a slot for a different tool.
+              </p>
+            )}
+            {addedIntegrations.length > 0 && (
               <button
                 type="button"
-                onClick={addIntegration}
-                disabled={!selectedIntegration}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setActiveIntegrationTab("existing")}
+                className="text-sm font-medium text-sv-blue hover:text-sv-blue-light"
               >
-                <Plus className="w-4 h-4" />
-                Add
+                View {addedIntegrations.length} integration{addedIntegrations.length !== 1 ? "s" : ""} in Existing →
               </button>
-            </div>
+            )}
           </div>
-        </div>
+        )}
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Plug2 className="w-5 h-5 text-gray-500" />
-              Connected integrations
-            </h3>
+        {activeIntegrationTab === "existing" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
+            {addedIntegrations.length > 0 && (
+              <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-50 text-green-800 border border-green-100">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {connectedCount} connected
+                </span>
+                {pendingAuthCount > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-100">
+                    {pendingAuthCount} need authorization
+                  </span>
+                )}
+                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-100">
+                  {addedIntegrations.length} total
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <Plug2 className="w-5 h-5 text-gray-500" />
+                Connected integrations
+              </h3>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={handleSaveIntegrations}
                 disabled={addedIntegrations.length === 0}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm sv-neo-btn sv-neo-btn--blue font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 Save
@@ -3230,9 +5817,16 @@ function IntegrationsContent() {
             </div>
           </div>
           {addedIntegrations.length === 0 ? (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
-              <Plug2 className="w-5 h-5 text-gray-400" />
-              <span className="text-sm text-gray-500">No integrations connected yet. Add one above.</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
+              <Plug2 className="w-5 h-5 text-gray-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-gray-600">No integrations yet.</p>
+                <p className="text-xs text-gray-500 mt-1">Add a tool from the catalog, then return here to authorize and assign actions.</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setActiveIntegrationTab("adding")}>
+                <Plus className="w-4 h-4" />
+                Go to Adding
+              </Button>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -3344,7 +5938,7 @@ function IntegrationsContent() {
                                   <button
                                     type="button"
                                     onClick={() => setAuthDialogItem(item)}
-                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-colors"
+                                    className="sv-neo-btn sv-neo-btn--blue flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
                                   >
                                     <LogIn className="w-4 h-4" />
                                     Connect & authorize
@@ -3402,7 +5996,7 @@ function IntegrationsContent() {
             </ul>
           )}
         </div>
-      </div>
+        )}
 
       {/* Auth / OAuth connection dialog */}
       <Dialog open={!!authDialogItem} onOpenChange={(open) => !open && setAuthDialogItem(null)}>
@@ -3449,39 +6043,13 @@ function IntegrationsContent() {
                   setAuthDialogItem(null);
                 }
               }}
-              className="px-4 py-2 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg"
+              className="sv-neo-btn sv-neo-btn--blue px-4 py-2 text-sm font-semibold rounded-xl"
             >
               Authorize (simulate)
             </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function PaymentContent() {
-  return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Payment methods</h1>
-      <p className="text-gray-600 mb-8">
-        Manage your payment methods for subscriptions and one-time purchases.
-      </p>
-
-      <div className="max-w-5xl space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Saved payment methods</h3>
-          <div className="flex flex-col items-center justify-center py-8 rounded-lg bg-gray-50 border border-dashed border-gray-200">
-            <CreditCard className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500">No payment methods added</p>
-            <button
-              type="button"
-              className="mt-4 px-4 py-2 text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors"
-            >
-              Add payment method
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -3520,7 +6088,33 @@ const MEMBERSHIP_PLANS = [
 
 type MembershipPlanId = (typeof MEMBERSHIP_PLANS)[number]["id"];
 
-function MembershipContent() {
+type AccountSubSectionId = "payment" | "membership";
+
+const accountSubSections: {
+  id: AccountSubSectionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "payment",
+    label: "Payment methods",
+    shortLabel: "Pay",
+    description: "Cards and saved payment methods for subscriptions, credits, and one-time purchases.",
+    icon: CreditCard,
+  },
+  {
+    id: "membership",
+    label: "Membership",
+    shortLabel: "Plan",
+    description: "Current plan, upgrade paths, workflows, and included credits.",
+    icon: Crown,
+  },
+];
+
+function AccountContent() {
+  const [activeAccountTab, setActiveAccountTab] = useState<AccountSubSectionId>("payment");
   const [currentPlanId, setCurrentPlanId] = useState<MembershipPlanId>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.membership);
@@ -3533,6 +6127,7 @@ function MembershipContent() {
     return "pay-as-you-go";
   });
 
+  const accountSectionMeta = accountSubSections.find((s) => s.id === activeAccountTab);
   const currentPlan = MEMBERSHIP_PLANS.find((p) => p.id === currentPlanId);
 
   const handleUpgrade = (planId: MembershipPlanId) => {
@@ -3540,79 +6135,144 @@ function MembershipContent() {
     localStorage.setItem(STORAGE_KEYS.membership, JSON.stringify({ planId }));
   };
 
-  return (
-    <div>
-      <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Membership</h1>
-      <p className="text-gray-600 mb-8">
-        Start with pay as you go and upgrade when you’re ready. View your current plan and manage your subscription.
-      </p>
-
-      <div className="max-w-5xl space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Crown className="w-5 h-5 text-sv-blue" />
-            Current plan: {currentPlan?.name ?? "Pay as you go"}
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">
-            {currentPlan?.id === "pay-as-you-go"
-              ? "You’re on the default pay-as-you-go plan. Pay only for what you use with no monthly commitment."
-              : `You’re on the ${currentPlan?.name} plan with ${currentPlan?.workflows} and ${currentPlan?.credits}.`}
-          </p>
-          {(currentPlan?.id === "pay-as-you-go" || currentPlan?.id === "starter") && (
+  const AccountSubNav = (
+    <>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">Account</p>
+      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+        {accountSubSections.map((sec) => {
+          const Icon = sec.icon;
+          return (
             <button
+              key={sec.id}
               type="button"
-              className="text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors"
+              onClick={() => setActiveAccountTab(sec.id)}
+              className={`flex items-center gap-2.5 w-full min-w-[max-content] lg:min-w-0 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal ${
+                activeAccountTab === sec.id ? "bg-sv-blue/10 text-sv-blue" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
             >
-              Add credits
+              <Icon className="w-4 h-4 shrink-0 opacity-80" />
+              <span className="lg:hidden">{sec.shortLabel}</span>
+              <span className="hidden lg:inline">{sec.label}</span>
             </button>
-          )}
-        </div>
+          );
+        })}
+      </div>
+    </>
+  );
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">All plans</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Pay as you go is the default. Upgrade to a plan with more workflows and included credits.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {MEMBERSHIP_PLANS.map((plan) => {
-              const isCurrent = plan.id === currentPlanId;
-              return (
-                <div
-                  key={plan.id}
-                  className={`rounded-xl border p-5 ${
-                    isCurrent
-                      ? "border-sv-blue bg-sv-blue/5 ring-2 ring-sv-blue/20"
-                      : "border-gray-200 bg-gray-50/50"
-                  }`}
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 lg:items-start">
+      <aside className="w-full lg:w-56 shrink-0 lg:border-r lg:border-gray-200 lg:pr-5 lg:mr-6 lg:min-h-[calc(100vh-6rem)]">
+        {AccountSubNav}
+      </aside>
+
+      <div className="flex-1 min-w-0 max-w-5xl">
+        <nav className="hidden sm:flex flex-wrap items-center gap-1 text-xs text-gray-400 mb-3" aria-hidden>
+          <span>Account</span>
+          <ChevronRight className="w-3 h-3 shrink-0" />
+          <span className="text-gray-600">{accountSectionMeta?.label}</span>
+        </nav>
+        <h1 className="font-[Sora] text-2xl font-bold text-gray-900 mb-2">Account</h1>
+        <p className="text-gray-600 mb-6 max-w-2xl">{accountSectionMeta?.description}</p>
+
+        {activeAccountTab === "payment" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Saved payment methods</h3>
+              <div className="flex flex-col items-center justify-center py-8 rounded-lg bg-gray-50 border border-dashed border-gray-200">
+                <CreditCard className="w-10 h-10 text-gray-300 mb-3" />
+                <p className="text-sm text-gray-500">No payment methods added</p>
+                <button
+                  type="button"
+                  className="mt-4 px-4 py-2 text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900">{plan.name}</h4>
-                    {isCurrent && (
-                      <span className="text-xs px-2 py-1 rounded bg-sv-blue/20 text-sv-blue font-medium">
-                        Current
-                      </span>
-                    )}
-                  </div>
-                  <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                    <li>{plan.workflows}</li>
-                    <li>{plan.credits}</li>
-                  </ul>
-                  {!isCurrent && (
-                    <button
-                      type="button"
-                      onClick={() => handleUpgrade(plan.id)}
-                      className="w-full py-2 text-sm font-medium text-white bg-sv-blue hover:bg-sv-blue-light rounded-lg transition-colors"
-                    >
-                      {plan.id === "pay-as-you-go"
-                        ? "Switch to Pay as you go"
-                        : `Upgrade to ${plan.name}`}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                  Add payment method
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Subscription charges for your{" "}
+              <button
+                type="button"
+                onClick={() => setActiveAccountTab("membership")}
+                className="text-sv-blue hover:text-sv-blue-light font-medium"
+              >
+                membership plan
+              </button>{" "}
+              can use a default card once you add one.
+            </p>
           </div>
-        </div>
+        )}
+
+        {activeAccountTab === "membership" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Crown className="w-5 h-5 text-sv-blue" />
+                Current plan: {currentPlan?.name ?? "Pay as you go"}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {currentPlan?.id === "pay-as-you-go"
+                  ? "You're on the default pay-as-you-go plan. Pay only for what you use with no monthly commitment."
+                  : `You're on the ${currentPlan?.name} plan with ${currentPlan?.workflows} and ${currentPlan?.credits}.`}
+              </p>
+              {(currentPlan?.id === "pay-as-you-go" || currentPlan?.id === "starter") && (
+                <button
+                  type="button"
+                  className="text-sm font-medium text-sv-blue hover:text-sv-blue-light transition-colors"
+                >
+                  Add credits
+                </button>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">All plans</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Pay as you go is the default. Upgrade to a plan with more workflows and included credits.
+              </p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {MEMBERSHIP_PLANS.map((plan) => {
+                  const isCurrent = plan.id === currentPlanId;
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`rounded-xl border p-5 ${
+                        isCurrent
+                          ? "border-sv-blue bg-sv-blue/5 ring-2 ring-sv-blue/20"
+                          : "border-gray-200 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-gray-900">{plan.name}</h4>
+                        {isCurrent && (
+                          <span className="text-xs px-2 py-1 rounded bg-sv-blue/20 text-sv-blue font-medium">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                        <li>{plan.workflows}</li>
+                        <li>{plan.credits}</li>
+                      </ul>
+                      {!isCurrent && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpgrade(plan.id)}
+                          className="w-full py-2 text-sm sv-neo-btn sv-neo-btn--blue font-medium rounded-xl"
+                        >
+                          {plan.id === "pay-as-you-go"
+                            ? "Switch to Pay as you go"
+                            : `Upgrade to ${plan.name}`}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

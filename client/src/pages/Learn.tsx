@@ -401,7 +401,7 @@ export default function Learn() {
               </p>
               <div className="mt-8">
                 <Link href="/contact">
-                  <span className="inline-flex items-center gap-2 px-8 py-4 text-sm font-semibold text-white bg-sv-blue hover:bg-sv-blue-light rounded-xl transition-all duration-200 shadow-lg shadow-sv-blue/20">
+                  <span className="sv-neo-btn sv-neo-btn--blue inline-flex items-center gap-2 px-8 py-4 text-sm rounded-xl">
                     Subscribe for Updates <ArrowRight size={16} />
                   </span>
                 </Link>
