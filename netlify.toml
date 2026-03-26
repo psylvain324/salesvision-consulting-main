@@ -1,0 +1,13 @@
+# Static SPA deploy (Vite build → dist/public)
+[build]
+  command = "npm run build:netlify"
+  publish = "dist/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Client-side routing (wouter / React Router)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
