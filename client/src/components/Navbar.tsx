@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const PORTFOLIO_URL = "https://portfolio.salesvision-consulting.com";
+const PORTFOLIO_URL = "https://phillipsylvain.netlify.app/";
 
 const mainNavLinks = [
   { href: "/", label: "Home" },

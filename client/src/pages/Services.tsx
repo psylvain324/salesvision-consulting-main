@@ -4,6 +4,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
+import SectionWaveDivider from "@/components/SectionWaveDivider";
 import {
   ArrowRight,
   Brain,
@@ -138,7 +139,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
       <section id="section-areas" className="py-24 lg:py-32">
         <div className="container">
           <AnimatedSection>
@@ -175,7 +176,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider flip />
       <section id="section-focus" className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
         <div className="container relative">
@@ -200,7 +201,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
       <section id="section-industries" className="py-24 lg:py-32">
         <div className="container">
           <AnimatedSection>
@@ -229,7 +230,7 @@ export default function Services() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider flip />
       <section id="section-cta" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
         <div className="container relative">

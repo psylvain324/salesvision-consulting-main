@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
 import ScrollDownButton from "@/components/ScrollDownButton";
+import SectionWaveDivider from "@/components/SectionWaveDivider";
 import {
   ArrowRight,
   Shield,
@@ -141,7 +142,7 @@ export default function Workflows() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
       {/* ===== CUSTOM AI & AUTOMATION (from former Services overview) ===== */}
       <section id="section-ai-capabilities" className="py-24 lg:py-32 relative scroll-mt-24">
         <div className="absolute inset-0 bg-gradient-to-b from-violet-500/[0.03] via-transparent to-transparent" />
@@ -202,7 +203,7 @@ export default function Workflows() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider flip />
       {/* ===== INDUSTRIES ===== */}
       <section className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
@@ -268,7 +269,7 @@ export default function Workflows() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
       {/* ===== WHY CHOOSE ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
@@ -308,7 +309,7 @@ export default function Workflows() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider flip />
       {/* ===== CTA ===== */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />

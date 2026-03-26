@@ -18,6 +18,7 @@ import {
   Plug2,
 } from "lucide-react";
 import ScrollDownButton from "@/components/ScrollDownButton";
+import SectionWaveDivider from "@/components/SectionWaveDivider";
 
 const HERO_BG = "/Images/Background_Futuristic_2.webp";
 
@@ -212,7 +213,10 @@ export default function Home() {
           </div>
         </div>
 
-        <ScrollDownButton to="section-services" light className="bottom-8" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1]">
+          <SectionWaveDivider />
+        </div>
+        <ScrollDownButton to="section-services" light className="bottom-8 z-10" />
       </section>
 
       {/* ===== CORE SERVICES — Treppy-style alternating layout ===== */}
@@ -280,8 +284,10 @@ export default function Home() {
                       </div>
 
                       {/* Large icon/image block — partial gradient border on aligned side */}
-                      <div className="flex-shrink-0 order-1 lg:order-none">
+                      <div className="flex-shrink-0 order-1 lg:order-none flex items-center justify-center">
+                        {/*
                         <div className={`service-image-gradient-border ${isEven ? "service-image-gradient-border--left" : "service-image-gradient-border--right"} flex items-center justify-center`}>
+                        */}
                         <motion.div
                           className="relative w-64 h-64 sm:w-[17.5rem] sm:h-[17.5rem] lg:w-[23.5rem] lg:h-[23.5rem] flex items-center justify-center hover:scale-[1.03] transition-transform duration-300"
                           whileInView={{ opacity: 1, scale: 1 }}
@@ -304,7 +310,9 @@ export default function Home() {
                             )}
                           </motion.div>
                         </motion.div>
+                        {/*
                         </div>
+                        */}
                       </div>
                     </div>
                   </div>
@@ -317,6 +325,8 @@ export default function Home() {
           <ScrollDownButton to="section-workflows" className="!relative !bottom-0 py-4" />
         </div>
       </section>
+
+      <SectionWaveDivider flip />
 
       <section id="section-workflows" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
@@ -507,7 +517,8 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
+
       {/* ===== CTA SECTION — Treppy-style ===== */}
       <section id="section-cta" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/8 via-transparent to-tv-orange/8" />
@@ -536,7 +547,8 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider flip />
+
       {/* ===== OUR DIVISIONS ===== */}
       <section id="section-divisions" className="py-24 lg:py-32 relative">
         <div className="container">

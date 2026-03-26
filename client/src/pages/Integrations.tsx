@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
 import ScrollDownButton from "@/components/ScrollDownButton";
+import SectionWaveDivider from "@/components/SectionWaveDivider";
 import {
   ArrowRight,
   Plug2,
@@ -161,7 +162,7 @@ export default function Integrations() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
       {/* ===== TECHNOLOGY CONSULTING (from former Services overview) ===== */}
       <section id="section-consulting" className="py-24 lg:py-32 relative scroll-mt-24">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.03] to-transparent" />
@@ -219,7 +220,7 @@ export default function Integrations() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider flip />
       {/* ===== INTEGRATION CATEGORIES ===== */}
       <section id="section-categories" className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sv-blue/[0.02] to-transparent" />
@@ -291,7 +292,7 @@ export default function Integrations() {
         </div>
       </section>
 
-      <hr className="section-divider section-divider-lg w-11/12 sm:w-3/4" aria-hidden />
+      <SectionWaveDivider />
       {/* ===== CTA ===== */}
       <section id="section-cta" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-sv-blue/5 via-transparent to-tv-orange/5" />
